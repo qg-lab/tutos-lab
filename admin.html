@@ -225,6 +225,19 @@ const TAGS_AUTO = {
 <div class="toast" id="toast"></div>
 
 <script>
+/* Cover YouTube choisie par le créateur : haute définition d'abord, puis repli.
+   YouTube renvoie une petite image grise (120 px) quand une taille n'existe pas : on passe alors à la suivante. */
+window.ytCover = function (img, failed) {
+  var steps = ["maxresdefault", "sddefault", "hqdefault"];
+  var i = +(img.dataset.s || 0);
+  if (!failed && img.naturalWidth > 120) return;
+  i++;
+  if (i >= steps.length) { img.remove(); return; }
+  img.dataset.s = i;
+  img.src = "https://i.ytimg.com/vi/" + img.dataset.id + "/" + steps[i] + ".jpg";
+};
+</script>
+<script>
 (() => {
   const $ = id => document.getElementById(id);
   const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -498,8 +511,8 @@ const TAGS_AUTO = {
     if (key === lastPreview) return; lastPreview = key;
     if (!p) { $("preview").innerHTML = `<span>Aperçu</span>`; return; }
     if (p.type === "youtube") {
-      $("preview").innerHTML = `<span>Cover</span><img alt="" src="https://i.ytimg.com/vi/${p.id}/oar2.jpg"
-        onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${p.id}/hqdefault.jpg'}else{this.remove()}">` +
+      $("preview").innerHTML = `<span>Cover</span><img alt="" referrerpolicy="no-referrer" data-id="${p.id}" data-s="0" src="https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg"
+           onload="ytCover(this,false)" onerror="ytCover(this,true)">` +
         (caption ? `<div class="cap">${esc(caption)}</div>` : "");
       return;
     }

@@ -393,6 +393,19 @@ const BOITE = [
 </div>
 
 <script>
+/* Cover YouTube choisie par le créateur : haute définition d'abord, puis repli.
+   YouTube renvoie une petite image grise (120 px) quand une taille n'existe pas : on passe alors à la suivante. */
+window.ytCover = function (img, failed) {
+  var steps = ["maxresdefault", "sddefault", "hqdefault"];
+  var i = +(img.dataset.s || 0);
+  if (!failed && img.naturalWidth > 120) return;
+  i++;
+  if (i >= steps.length) { img.remove(); return; }
+  img.dataset.s = i;
+  img.src = "https://i.ytimg.com/vi/" + img.dataset.id + "/" + steps[i] + ".jpg";
+};
+</script>
+<script>
 (() => {
   const $ = id => document.getElementById(id);
   const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -673,8 +686,8 @@ const BOITE = [
     const titre = t.titre || "Tuto " + NOM[t.type];
     const visual = t.type === "youtube"
       ? `<div class="fb">${esc(titre)}</div>
-         <img class="cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://i.ytimg.com/vi/${t.id}/oar2.jpg"
-           onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${t.id}/hqdefault.jpg'}else{this.remove()}">
+         <img class="cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-id="${t.id}" data-s="0" src="https://i.ytimg.com/vi/${t.id}/maxresdefault.jpg"
+           onload="ytCover(this,false)" onerror="ytCover(this,true)">
          <div class="shade"></div>`
       : `<div class="fb">${esc(titre)}</div><span class="plat">${NOM[t.type]}</span>`;
     wrap.innerHTML = `
@@ -719,7 +732,7 @@ const BOITE = [
     const tutos = ALL.filter(t => ws.every(w => t.hay.includes(w))).sort((a, b) => b.order - a.order).slice(0, raw ? 6 : 4);
     if (tutos.length) groups.push([raw ? "Tutos" : "Derniers tutos", tutos.map(t => ({
       html: (t.type === "youtube"
-          ? `<span class="vis th"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="https://i.ytimg.com/vi/${t.id}/oar2.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${t.id}/hqdefault.jpg'}else{this.remove()}"></span>`
+          ? `<span class="vis th"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="https://i.ytimg.com/vi/${t.id}/hqdefault.jpg" onerror="this.remove()"></span>`
           : `<span class="vis ab">${esc(abbr(t.cat))}</span>`) +
         `<span class="lbl"><b>${hl(t.titre || "Tuto " + NOM[t.type], ws)}</b><span class="sub"> — ${esc(t.cat.label)}</span></span>`,
       run: () => openLink(t.type === "youtube" ? `https://www.youtube.com/shorts/${t.id}` : t.url) }))]);
