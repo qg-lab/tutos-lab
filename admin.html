@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Back office — Tutos</title>
+<title>Back office Lab 360</title>
 <script>
 /* URL de l'Apps Script (…/exec). Vide = mode démo (rien n'est enregistré). */
 const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3G-pxoYHjXIJ9eDqaGyyETLCxeJTjLWtz5Z6x2y0Jusjx/exec";
@@ -151,7 +151,7 @@ const TAGS_AUTO = {
 
 <header>
   <div class="brand">
-    <p>Back office<br>Préparatoire appliquée<br>Outils numériques</p>
+    <p>Back office<br>Lab 360</p>
   </div>
   <div class="hlinks up">
     <a href="index.html" target="_blank" rel="noopener">Voir le site ↗</a>
@@ -366,7 +366,7 @@ window.ytCover = function (img, failed) {
     // le logiciel aide aussi : InDesign → Print, Figma → Web
     const parLogiciel = { indesign: " print ", figma: " web " }[norm(logiciel)] || "";
     const hay = sansLogiciels([titre, ...tags].join(" ")) + parLogiciel;
-    return Object.entries(CATS_AUTO).filter(([, mots]) => mots.some(m => hay.includes(norm(m)))).map(([c]) => c);
+    return Object.entries(CATS_AUTO).filter(([, mots]) => mots.some(m => hay.includes(" " + norm(m)))).map(([c]) => c);
   }
 
   /* ---------- Connexion ---------- */
@@ -473,7 +473,7 @@ window.ytCover = function (img, failed) {
     const out = [];
     const add = s => { if (s && !out.some(x => norm(x) === norm(s))) out.push(s); };
     hashtags.forEach(h => { const k = Object.keys(TAGS_AUTO).find(tag => norm(tag) === norm(h)); add(k || h); });
-    Object.entries(TAGS_AUTO).forEach(([tag, mots]) => { if (mots.some(m => hay.includes(norm(m)))) add(tag); });
+    Object.entries(TAGS_AUTO).forEach(([tag, mots]) => { if (mots.some(m => hay.includes(" " + norm(m)))) add(tag); });
     allTags().forEach(t => { if (norm(t.label).length > 2 && hay.includes(" " + norm(t.label) + " ")) add(t.label); });
     return out.filter(s => !allLogiciels().some(l => norm(l) === norm(s))).slice(0, 6);
   }
@@ -484,20 +484,22 @@ window.ytCover = function (img, failed) {
     let inf = {};
     try { inf = (await api("infos", { lien })).infos || {}; } catch (e) {}
     const hashtags = (inf.tags || []).slice();
+    // titre d'origine (avec le nom du logiciel) + titre court traduit, pour les suggestions
+    const titreTout = [inf.titreOriginal || "", inf.titre || ""].join(" ");
     if (lastInfos !== id) return;               // un autre lien a été collé entre-temps
     const fill = (fid, val) => { const el = $(fid); if (val && !el.value.trim()) { el.value = val; el.classList.remove("fetched"); void el.offsetWidth; el.classList.add("fetched"); } };
     fill("fTitre", inf.titre);
     fill("fAuteur", inf.auteur);
     if (!$("fTags").value.trim()) {
-      const tags = suggestTags(inf.titre || "", inf.tags || []);
+      const tags = suggestTags(titreTout, inf.tags || []);
       if (tags.length) { inf.tags = tags; fill("fTags", tags.join(", ")); }
     }
     if (!catsChoisies && !cats.size && !editing) {
-      suggestCats(inf.titre || "", inf.tags || []).forEach(c => cats.add(c));
+      suggestCats(titreTout, inf.tags || []).forEach(c => cats.add(c));
       renderCats();
     }
     // Logiciel détecté dans le titre ou les tags
-    const hay = norm([inf.titre, ...hashtags].join(" "));
+    const hay = norm([titreTout, ...hashtags].join(" "));
     const found = allLogiciels().find(l => hay.includes(norm(l)));
     if (found && !editing && !logicielChoisi) { logiciel = found; renderLabels(); }
     renderSugg(); setPreview(parseUrl(lien), inf.titre);
