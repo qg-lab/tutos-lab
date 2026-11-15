@@ -11,7 +11,7 @@
 <script>
 /* Même adresse que dans index.html et admin.html (laisser vide = mode démo) */
 const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3G-pxoYHjXIJ9eDqaGyyETLCxeJTjLWtz5Z6x2y0Jusjx/exec";
-const CLASSES = ["Prépas", "G2", "G3"];
+const CLASSES = ["Prépa 1", "Prépa 2", "G2", "G3"];
 </script>
 <style>
   :root{--surf:#161616;--surf2:#202020;--surf3:#2a2a2a;--bg:#000;--fg:#fff;--muted:#8a8a8a;--ink:#BDC9C9;--line:#1e1e1e;--red:#E63A24;--pad:20px;--gap:16px}
@@ -247,7 +247,7 @@ const CLASSES = ["Prépas", "G2", "G3"];
 
   // Démo (API_URL vide) : quelques projets fictifs
   function demo() {
-    const sujets = { "Prépas": ["Affiche typographique", "Autoportrait en objets"], "G2": ["Identité d'un festival", "Packaging"], "G3": ["Univers de marque"] };
+    const sujets = { "Prépa 1": ["Affiche typographique"], "Prépa 2": ["Autoportrait en objets"], "G2": ["Identité d'un festival", "Packaging"], "G3": ["Univers de marque"] };
     const noms = ["Léa M.", "Hugo B.", "Inès K.", "Tom R.", "Jade L.", "Noah P.", "Lina D.", "Sacha V."];
     const out = []; let i = 0;
     Object.entries(sujets).forEach(([c, ss]) => ss.forEach(s => noms.slice(0, 5 + (i % 3)).forEach((n, k) => {

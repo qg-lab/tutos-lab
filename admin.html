@@ -529,7 +529,7 @@ window.ytCover = function (img, failed) {
   /* =====================================================================
      GALERIE DES PROJETS — 1 image par élève et par sujet
      ===================================================================== */
-  const CLASSES = ["Prépas", "G2", "G3"];
+  const CLASSES = ["Prépa 1", "Prépa 2", "G2", "G3"];
   const gsrc = (id, w) => /^(data:|blob:|https?:)/.test(id) ? id : `https://lh3.googleusercontent.com/d/${id}=w${w}`;
   window.gImgErr = img => { if (!img.dataset.r && img.dataset.id) { img.dataset.r = 1; img.src = `https://drive.google.com/thumbnail?id=${img.dataset.id}&sz=w400`; } };
   let gClasse = "", gQueue = [], gEdit = null, gBusy = false;
@@ -549,7 +549,13 @@ window.ytCover = function (img, failed) {
      L'élève peut aussi être collé : G3_DUC_ZoéPureur.jpg
      Sans classe dans le nom : c'est la classe choisie en haut qui s'applique.
      Sans « _ » : seulement l'élève (« lea-martin.jpg » → Lea M.) */
-  const CLASSE_MOTS = { prepa: "Prépas", prepas: "Prépas", prep: "Prépas", g2: "G2", g3: "G3" };
+  // PREPA, PREPAS, PREPA1, Prépa 2… → Prépas ; G2 ; G3
+  const classeDe = x => {
+    const k = norm(x).replace(/[\s._-]+/g, "");
+    const m = k.match(/^prep(?:a|as)?(\d)$/);
+    if (m) return "Prépa " + m[1];                 // PREPA1, Prépa 2, prep2… → Prépa 1 / Prépa 2
+    return k === "g2" ? "G2" : k === "g3" ? "G3" : "";
+  };
   const isUpper = w => w === w.toUpperCase() && w !== w.toLowerCase();
   function eleveDe(tokens) {
     let t = tokens.flatMap(x => x.split(/\s+/)).filter(Boolean);
@@ -564,15 +570,20 @@ window.ytCover = function (img, failed) {
     const base = String(fname || "").replace(/\.[a-z0-9]{2,4}$/i, "").normalize("NFC").trim();
     if (!base.includes("_")) return { nom: formatNom(base, true), sujet: "", classe: "" };
     let parts = base.split("_").map(x => x.trim()).filter(Boolean), classe = "";
-    parts = parts.filter(x => { const c = CLASSE_MOTS[norm(x).replace(/\s+/g, "")]; if (c && !classe) { classe = c; return false; } return true; });
+    parts = parts.filter(x => { const c = classeDe(x); if (c && !classe) { classe = c; return false; } return true; });
     // photos d'appareil (IMG_2034, DSC_0012…) : rien à deviner
     if (!parts.length || /^(img|dsc|dscn|pxl|photo|image|scan|screenshot|capture|whatsapp)$/i.test(parts[0]) || !/\p{L}/u.test(parts[0]))
       return { nom: "", sujet: "", classe };
     if (parts.length === 1) return { nom: "", sujet: "", classe };
-    let sujet = parts[0].replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+    // les 2 derniers morceaux = Prénom_Nom ; tout ce qui précède = le sujet
+    // (avec seulement 2 morceaux : SUJET_PrénomNom collés)
+    const nEleve = parts.length >= 3 ? 2 : 1;
+    let sujet = parts.slice(0, -nEleve).join(" ").replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+    // « AFFICHE EFFETS » → « Affiche effets » (un sigle court comme « DUC » reste en capitales)
+    if (isUpper(sujet) && (sujet.includes(" ") || sujet.length > 4)) sujet = sujet.toLowerCase();
     const connu = sujetsDe("").find(x => norm(x) === norm(sujet));            // garde l'orthographe d'un sujet existant
     sujet = connu || sujet.charAt(0).toUpperCase() + sujet.slice(1);
-    return { nom: eleveDe(parts.slice(1)), sujet, classe };
+    return { nom: eleveDe(parts.slice(-nEleve)), sujet, classe };
   }
   const sujetsDe = c => [...new Map(galerie.filter(g => !c || norm(g.classe) === norm(c)).map(g => [norm(g.sujet), g.sujet])).values()];
   const existe = (c, s, e) => galerie.find(g => norm(g.classe) === norm(c) && norm(g.sujet) === norm(s) && norm(g.eleve) === norm(e) && (!gEdit || g.id !== gEdit));
@@ -697,10 +708,12 @@ window.ytCover = function (img, failed) {
     gQueue = gQueue.filter(q => !q.done);
     imgs.forEach(f => { const r = parseFichier(f.name); const q = { file: f, url: URL.createObjectURL(f), nom: r.nom, sujet: r.sujet, classe: r.classe }; apercu(q); gQueue.push(q); });
     // un seul sujet / une seule classe dans les fichiers : on remplit aussi les champs du haut
-    // (seulement si TOUS les fichiers indiquent le même sujet / la même classe)
-    const suj = [...new Set(gQueue.map(q => q.sujet || ""))], cla = [...new Set(gQueue.map(q => q.classe || ""))];
-    if (suj.length === 1 && suj[0] && !$("gSujet").value.trim()) $("gSujet").value = suj[0];
-    if (cla.length === 1 && cla[0] && !gClasse) { gClasse = cla[0]; renderGal(); return; }
+    // (si TOUS les fichiers du lot indiquent le même sujet / la même classe, on remplace)
+    const lot = gQueue.slice(-imgs.length);
+    const suj = [...new Set(lot.map(q => q.sujet || ""))], cla = [...new Set(lot.map(q => q.classe || ""))];
+    if (suj.length === 1 && suj[0]) $("gSujet").value = suj[0];
+    if (cla.length === 1 && cla[0]) gClasse = cla[0];
+    renderGal(); return;
     renderQueue();
   }
   $("gClasse").addEventListener("click", e => { const b = e.target.closest(".lab"); if (!b || gBusy) return; gClasse = gClasse === b.dataset.c ? "" : b.dataset.c; renderGal(); });
@@ -767,7 +780,8 @@ window.ytCover = function (img, failed) {
   $("gCancel").addEventListener("click", gResetForm);
 
   function renderGList() {
-    const parClasse = CLASSES.map(c => [c, galerie.filter(g => norm(g.classe) === norm(c))]).filter(x => x[1].length);
+    const autres = [...new Set(galerie.map(g => g.classe))].filter(c => !CLASSES.some(x => norm(x) === norm(c)));
+    const parClasse = CLASSES.concat(autres).map(c => [c, galerie.filter(g => norm(g.classe) === norm(c))]).filter(x => x[1].length);
     $("gList").innerHTML = `<h1>Galerie en ligne <small class="up" style="color:#8a8a8a;font-size:12px">${galerie.length}</small></h1>` +
       (galerie.length ? "" : `<p class="empty">Aucun projet pour l'instant.</p>`) +
       parClasse.map(([c, l]) => `<h2>${esc(c)}<small>${l.length}</small></h2>` +
