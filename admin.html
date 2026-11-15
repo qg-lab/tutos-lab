@@ -155,13 +155,6 @@ const TAGS_AUTO = {
   .list{margin-top:72px}
   .list h2{font-weight:400;font-size:22px;margin:40px 0 12px;display:flex;gap:10px;align-items:baseline}
   .list h2 small{font-size:12px;color:var(--muted)}
-  .bulk{margin:56px 0 0;border:1px solid #262626;padding:18px 18px 20px}
-  .bulk h2{font-weight:400;font-size:12px;color:#8a8a8a;margin:0 0 8px}
-  .bulk .bhint{font-size:13px;color:#8a8a8a;margin-bottom:14px}
-  .brow2{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
-  .brow2 label{color:#8a8a8a}
-  .brow2 select{background:#161616;color:#ddd;border:0;border-radius:3px;height:38px;padding:0 10px;font:inherit;font-size:13px}
-  .brow2 .btn:disabled{opacity:.4;cursor:default}
   .row{display:grid;grid-template-columns:70px 1fr auto;gap:16px;align-items:center;border-top:1px solid #1a1a1a;padding:12px 0}
   .row.editing{background:#111}
   .plat{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#777}
@@ -277,22 +270,6 @@ const TAGS_AUTO = {
     </div>
     <div class="preview" id="preview"><span>Aperçu</span></div>
   </form>
-
-  <section class="bulk" id="bulk" hidden>
-    <h2 class="up">Action groupée</h2>
-    <p class="bhint">Ajoute une ou plusieurs étapes de l'approche à plusieurs tutos d'un coup. Les catégories et approches déjà présentes sont conservées.</p>
-    <div class="labels" id="bulkApps"></div>
-    <div class="brow2">
-      <label class="up" for="bulkScope">Appliquer à</label>
-      <select id="bulkScope">
-        <option value="youtube">Tous les tutos YouTube</option>
-        <option value="tiktok">Tous les tutos TikTok</option>
-        <option value="instagram">Tous les tutos Instagram</option>
-        <option value="all">Tous les tutos</option>
-      </select>
-      <button class="btn" type="button" id="bulkGo">Appliquer</button>
-    </div>
-  </section>
 
   <div class="list" id="list"></div>
 </main>
@@ -648,47 +625,6 @@ window.ytCover = function (img, failed) {
     $("save").disabled = false;
   }
 
-  /* ---------- Action groupée : ajouter des étapes de l'approche à plusieurs tutos ---------- */
-  const bulkSel = new Set(["Transformer", "Composer"]);
-  let bulkBusy = false;
-  const bulkCibles = () => {
-    const scope = $("bulkScope").value;
-    return tutos.filter(t => scope === "all" || (parseUrl(t.lien) || {}).type === scope)
-      .filter(t => [...bulkSel].some(a => !(t.categories || []).some(c => norm(c) === norm(a))));
-  };
-  function renderBulk() {
-    $("bulk").hidden = !tutos.length;
-    $("bulkApps").innerHTML = APPROCHES.map((c, i) => `<button type="button" class="lab${bulkSel.has(c) ? " on" : ""}" data-c="${esc(c)}"><span style="opacity:.5;margin-right:6px">0${i + 1}</span>${esc(c)}</button>`).join("");
-    if (bulkBusy) return;
-    const n = bulkCibles().length;
-    $("bulkGo").disabled = !n || !bulkSel.size;
-    $("bulkGo").textContent = !bulkSel.size ? "Choisis au moins une étape" : n ? `Ajouter à ${n} tuto${n > 1 ? "s" : ""}` : "Déjà fait pour tous";
-  }
-  $("bulkApps").addEventListener("click", e => {
-    const b = e.target.closest(".lab"); if (!b || bulkBusy) return;
-    const c = b.dataset.c; bulkSel.has(c) ? bulkSel.delete(c) : bulkSel.add(c); renderBulk();
-  });
-  $("bulkScope").addEventListener("change", renderBulk);
-  $("bulkGo").addEventListener("click", async () => {
-    const cibles = bulkCibles(); if (!cibles.length || bulkBusy) return;
-    bulkBusy = true; $("bulkGo").disabled = true;
-    let ok = 0, d = null;
-    try {
-      for (const t of cibles) {
-        $("bulkGo").textContent = `En cours… ${ok + 1} / ${cibles.length}`;
-        const categories = [...(t.categories || [])];
-        bulkSel.forEach(a => { if (!categories.some(c => norm(c) === norm(a))) categories.push(a); });
-        const tuto = { lien: t.lien, titre: t.titre || "", auteur: t.auteur || "", tags: t.tags || [], logiciel: t.logiciel || "", categories };
-        d = await api("update", { id: t.id, tuto });
-        ok++;
-      }
-      toast(`${ok} tuto${ok > 1 ? "s" : ""} mis à jour`);
-    } catch (err) { toast(`Arrêté après ${ok} tuto${ok > 1 ? "s" : ""} : ${err.message}`, true); }
-    bulkBusy = false;
-    if (d) setData(d);
-    render();
-  });
-
   /* ---------- Liste ---------- */
   function renderList() {
     const groups = allLogiciels().map(l => [l, tutos.filter(t => norm(t.logiciel) === norm(l))]).filter(g => g[1].length);
@@ -734,7 +670,7 @@ window.ytCover = function (img, failed) {
     }
   });
 
-  function render() { renderBulk(); renderLabels(); renderCats(); renderApps(); renderSugg(); renderList(); renderAcces(); }
+  function render() { renderLabels(); renderCats(); renderApps(); renderSugg(); renderList(); renderAcces(); }
 
   async function saveCle() {
     const cle = $("cleEtu").value.trim();
