@@ -56,6 +56,31 @@
   .orb{transform-box:view-box;transform-origin:12px 12px;animation-timing-function:cubic-bezier(.6,0,.3,1)}
   .homebtn:hover .orb{animation:orb 1.8s cubic-bezier(.6,0,.3,1)}
   @media (prefers-reduced-motion:reduce){.orb{animation:none!important}}
+
+  /* ===== Menu mobile (bouton ☰ à droite de la recherche) ===== */
+  .menubtn{display:none;width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);place-items:center;cursor:pointer;flex:none;transition:background .15s,color .15s}
+  .menubtn:hover{background:#222;color:#fff}
+  .menubtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+  .menubtn .x{display:none} body.mopen .menubtn .x{display:block} body.mopen .menubtn .b{display:none}
+  .mnav{position:fixed;inset:0;z-index:29;background:#000;display:none;flex-direction:column;justify-content:space-between;padding:96px var(--pad) 28px;overflow-y:auto}
+  body.mopen{overflow:hidden}
+  body.mopen .mnav{display:flex}
+  body.mopen .topbar > :not(header){display:none}   /* filtres masqués sous le menu */
+  .mnav ul{list-style:none;border-top:1px solid #1e1e1e}
+  .mnav li a{display:flex;justify-content:space-between;align-items:baseline;padding:18px 0;border-bottom:1px solid #1e1e1e;color:var(--ink);text-decoration:none;font-size:30px;line-height:1.1;letter-spacing:-.01em}
+  .mnav li a small{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.02em}
+  .mnav li a:hover,.mnav li a.on{color:#fff}
+  .mnav li a.on small{color:var(--red)}
+  .mnav .msig{color:var(--ink);font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;margin-top:32px}
+  .mnav .msig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
+  @media (max-width:1100px){ .menubtn{display:grid} }
+  @media (max-width:800px){
+    header{padding:12px var(--pad);gap:8px}
+    .homebtn,.menubtn{width:46px;height:46px}
+    .spill{height:46px;padding-left:14px}
+    .sbar input{font-size:15px}
+    .mnav{padding-top:84px}
+  }
 </style>
 </head>
 <body>
@@ -74,6 +99,10 @@
     <span class="sep" aria-hidden="true"></span>
     <a class="catbtn ic-btn" href="index.html?vue=outils" aria-label="Boîte à outils" title="Boîte à outils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg></a>
   </form>
+  <button class="menubtn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">
+    <svg class="b" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>
+    <svg class="x" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
 </header>
 </div>
 <main>
@@ -105,7 +134,7 @@
     <li>L'accès aux tutos est réservé aux étudiants par un mot de passe. Pour ne pas avoir à le retaper, il est mémorisé dans votre navigateur (stockage local), uniquement sur votre appareil. Cette mémorisation est strictement nécessaire au service et ne sert à rien d'autre. Le bouton « Se déconnecter », en bas du site, l'efface.</li>
     <li>La police de caractères (Geist) est chargée depuis Google Fonts. Comme pour toute ressource web, votre navigateur transmet à Google votre adresse IP. Aucun cookie n'est déposé.</li>
     <li>La liste des tutos est chargée depuis un service Google (Google Apps Script) qui sert de base de données au site. Comme pour toute page web, votre navigateur transmet à Google les informations techniques de la requête, notamment votre adresse IP. Aucun cookie n'est déposé et aucune donnée n'est enregistrée à votre sujet.</li>
-    <li>Les images de la galerie sont stockées sur le Google Drive de l'éditeur et affichées depuis les serveurs de Google. Pour les afficher, votre navigateur transmet à Google les informations techniques habituelles d'une requête web, notamment votre adresse IP. Ces images ne déposent pas de cookie.</li>
+    <li>Les images de la galerie, ainsi que les images de couverture ajoutées par l'éditeur pour certains tutos (Instagram, TikTok…), sont stockées sur le Google Drive de l'éditeur et affichées depuis les serveurs de Google. Pour les afficher, votre navigateur transmet à Google les informations techniques habituelles d'une requête web, notamment votre adresse IP. Ces images ne déposent pas de cookie.</li>
     <li>Les images de couverture des vidéos YouTube sont affichées depuis les serveurs de YouTube (Google). Pour les afficher, votre navigateur transmet à YouTube les informations techniques habituelles d'une requête web, notamment votre adresse IP. Ces images ne déposent pas de cookie.</li>
     <li>Dans la boîte à outils, les petites icônes des sites (favicons) sont affichées via un service de Google, qui reçoit pour cela l'adresse IP de votre navigateur. Elles ne déposent pas de cookie.</li>
     <li>En cliquant sur un tuto, vous quittez ce site pour la plateforme concernée, dont la politique de confidentialité s'applique alors.</li>
@@ -118,5 +147,27 @@
 <footer class="foot">
   <a href="galerie.html">Galerie</a><a href="about.html">À propos</a><a href="mentions-legales.html" class="on">Mentions légales &amp; confidentialité</a>
 </footer>
+<div class="mnav" id="mnav" role="navigation" aria-label="Menu">
+  <ul><li><a href="index.html">Tutos<small>01</small></a></li><li><a href="galerie.html">Galerie<small>02</small></a></li><li><a href="index.html?vue=outils">Boîte à outils<small>03</small></a></li><li><a href="about.html">À propos<small>04</small></a></li><li><a href="mentions-legales.html" class="on">Mentions légales<small>05</small></a></li></ul>
+  <p class="msig">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</p>
+</div>
+<script>
+/* Menu mobile + recherche « Recherche » sur petit écran */
+(() => {
+  const btn = document.getElementById("menuBtn"), nav = document.getElementById("mnav");
+  const set = open => {
+    document.body.classList.toggle("mopen", open); btn.setAttribute("aria-expanded", open);
+    if (open) nav.style.paddingTop = (btn.closest("header").getBoundingClientRect().bottom + 16) + "px";
+  };
+  btn.addEventListener("click", () => set(!document.body.classList.contains("mopen")));
+  nav.addEventListener("click", e => { if (e.target.closest("a")) set(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") set(false); });
+  matchMedia("(min-width:1101px)").addEventListener("change", e => { if (e.matches) set(false); });
+  const inp = document.querySelector(".sbar input"), long = inp && inp.placeholder;
+  const mq = matchMedia("(max-width:800px)");
+  const ph = () => { if (inp) inp.placeholder = mq.matches ? "Recherche" : long; };
+  ph(); mq.addEventListener("change", ph);
+})();
+</script>
 </body>
 </html>

@@ -153,6 +153,10 @@ const TAGS_AUTO = {
   .preview .cap{position:absolute;left:0;right:0;bottom:0;padding:30px 8px 8px;font-size:11px;line-height:1.3;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff}
   .field input.fetched{animation:flash 1.2s}
   @keyframes flash{0%{border-color:var(--red)}100%{border-color:#333}}
+  .preview.drop{cursor:pointer;border-style:dashed;border-color:#444}
+  .preview.drop:hover,.preview.drop.over{border-color:#fff}
+  .preview .rmc{position:absolute;top:8px;right:8px;z-index:3;background:rgba(0,0,0,.75);border:0;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.02em;padding:6px 9px;border-radius:3px;cursor:pointer}
+  .preview .rmc:hover{background:#000}
   .preview span{position:absolute;inset:0;display:grid;place-items:center;color:#444;font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:10px}
 
   /* Galerie */
@@ -310,6 +314,7 @@ const TAGS_AUTO = {
       </div>
     </div>
     <div class="preview" id="preview"><span>Aperçu</span></div>
+    <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" hidden>
   </form>
 
   <div class="list" id="list"></div>
@@ -397,8 +402,8 @@ window.ytCover = function (img, failed) {
   async function api(action, extra = {}) {
     if (DEMO) {
       await new Promise(r => setTimeout(r, 150));
-      if (action === "create") demoData.push({ id: "d" + Date.now(), ...extra.tuto });
-      if (action === "update") demoData = demoData.map(t => t.id === extra.id ? { id: t.id, ...extra.tuto } : t);
+      if (action === "create") demoData.push({ id: "d" + Date.now(), ...extra.tuto, cover: extra.cover ? extra.cover.data : "" });
+      if (action === "update") demoData = demoData.map(t => t.id === extra.id ? { id: t.id, ...extra.tuto, cover: extra.cover ? extra.cover.data : extra.coverSuppr ? "" : t.cover } : t);
       if (action === "delete") demoData = demoData.filter(t => t.id !== extra.id);
       if (action === "galerieAjout") {
         const ex = demoGal.find(g => norm(g.classe) === norm(extra.projet.classe) && norm(g.sujet) === norm(extra.projet.sujet) && norm(g.eleve) === norm(extra.projet.eleve));
@@ -467,6 +472,8 @@ window.ytCover = function (img, failed) {
   let appsChoisies = false;
   const estApproche = c => APPROCHES.some(a => norm(a) === norm(c));
 
+  // « MAIN » → « Main » pour un nouveau logiciel (un sigle court reste en capitales)
+  const joliNom = v => { v = String(v || "").trim(); return v.length > 3 && v === v.toUpperCase() && v !== v.toLowerCase() ? v.charAt(0) + v.slice(1).toLowerCase() : v; };
   function allCats() {
     const m = new Map(CATEGORIES.map(c => [norm(c), c]));
     tutos.forEach(t => (t.categories || []).forEach(c => { if (!estApproche(c) && !m.has(norm(c))) m.set(norm(c), c); }));
@@ -496,7 +503,7 @@ window.ytCover = function (img, failed) {
     ex ? cats.delete(ex) : cats.add(c);
     catsChoisies = true; renderCats();
   });
-  const addNewCat = v => { v = v.trim(); if (v && !estApproche(v) && ![...cats].some(x => norm(x) === norm(v))) cats.add(v); catsChoisies = true; renderCats(); };
+  const addNewCat = v => { v = joliNom(v); if (v && !estApproche(v) && ![...cats].some(x => norm(x) === norm(v))) cats.add(v); catsChoisies = true; renderCats(); };
   $("cats").addEventListener("keydown", e => {
     if (e.target.id !== "newCatInput") return;
     if (e.key === "Enter") { e.preventDefault(); addNewCat(e.target.value); }
@@ -883,11 +890,11 @@ window.ytCover = function (img, failed) {
   });
   $("labels").addEventListener("keydown", e => {
     if (e.target.id !== "newLabInput") return;
-    if (e.key === "Enter") { e.preventDefault(); const v = e.target.value.trim(); if (v) logiciel = v; renderLabels(); }
+    if (e.key === "Enter") { e.preventDefault(); const v = joliNom(e.target.value); if (v) logiciel = v; renderLabels(); }
     if (e.key === "Escape") renderLabels();
   });
   $("labels").addEventListener("focusout", e => {
-    if (e.target.id === "newLabInput") { const v = e.target.value.trim(); if (v) logiciel = v; setTimeout(renderLabels, 100); }
+    if (e.target.id === "newLabInput") { const v = joliNom(e.target.value); if (v) logiciel = v; setTimeout(renderLabels, 100); }
   });
 
   function renderSugg() {
@@ -965,8 +972,9 @@ window.ytCover = function (img, failed) {
       : " — infos non disponibles, remplis à la main");
   }
   function setPreview(p, caption) {
-    const key = p ? p.type + p.id + (caption || "") : "";
+    const key = p ? p.type + p.id + (caption || "") + (editing || "") + (coverNew ? coverNew.data.length : "") + coverSuppr : "";
     if (key === lastPreview) return; lastPreview = key;
+    $("preview").classList.remove("drop"); $("preview").title = "";
     if (!p) { $("preview").innerHTML = `<span>Aperçu</span>`; return; }
     if (p.type === "youtube") {
       $("preview").innerHTML = `<span>Cover</span><img alt="" referrerpolicy="no-referrer" data-id="${p.id}" data-s="0" src="https://i.ytimg.com/vi/${p.id}/maxresdefault.jpg"
@@ -974,12 +982,45 @@ window.ytCover = function (img, failed) {
         (caption ? `<div class="cap">${esc(caption)}</div>` : "");
       return;
     }
-    $("preview").innerHTML = `<span>${NAME[p.type]}<br><br>Pas de cover :<br>carte texte avec le titre</span>`;
+    // Pas de cover automatique (Instagram, TikTok…) : on peut en déposer une
+    const ex = editing && !coverSuppr ? (tutos.find(x => x.id === editing) || {}).cover : "";
+    const img = coverNew ? coverNew.data : ex ? gsrc(ex, 800) : "";
+    $("preview").classList.add("drop");
+    $("preview").title = "Glisse une image ici, ou clique pour en choisir une";
+    $("preview").innerHTML = img
+      ? `<img alt="" src="${esc(img)}" ${!coverNew && !/^(data:|https?:)/.test(ex) ? `data-id="${esc(ex)}"` : ""} onerror="gImgErr(this)" referrerpolicy="no-referrer">
+         <button type="button" class="rmc" id="rmCover">Retirer</button>` + (caption ? `<div class="cap">${esc(caption)}</div>` : "")
+      : `<span>Pas de cover ${esc(NAME[p.type] || "")}<br><br>Glisse une image ici<br>ou clique pour en choisir une<br><br>(capture de la vidéo, visuel…)</span>`;
   }
+
+  /* ---------- Cover manuelle (liens sans cover automatique) ---------- */
+  let coverNew = null, coverSuppr = false;
+  const sansCoverAuto = () => { const p = parseUrl($("fLien").value); return !!p && p.type !== "youtube"; };
+  async function setCover(file) {
+    if (!file || !sansCoverAuto()) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) && !/\.pdf$/i.test(file.name) && file.type !== "application/pdf") return toast("Formats acceptés : JPG, PNG, WebP ou PDF", true);
+    $("preview").innerHTML = `<span>Préparation…</span>`;
+    try { coverNew = await prepare(file); coverSuppr = false; }
+    catch (err) { toast(err.message, true); }
+    lastPreview = ""; setPreview(parseUrl($("fLien").value), $("fTitre").value.trim());
+  }
+  $("preview").addEventListener("click", e => {
+    if (!sansCoverAuto()) return;
+    if (e.target.closest("#rmCover")) {
+      e.stopPropagation();
+      if (coverNew) coverNew = null; else coverSuppr = true;
+      lastPreview = ""; setPreview(parseUrl($("fLien").value), $("fTitre").value.trim()); return;
+    }
+    $("coverFile").click();
+  });
+  $("coverFile").addEventListener("change", e => { setCover(e.target.files[0]); e.target.value = ""; });
+  ["dragenter", "dragover"].forEach(t => $("preview").addEventListener(t, e => { if (!sansCoverAuto()) return; e.preventDefault(); $("preview").classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => $("preview").addEventListener(t, e => { $("preview").classList.remove("over"); if (sansCoverAuto()) e.preventDefault(); }));
+  $("preview").addEventListener("drop", e => { if (sansCoverAuto()) setCover(e.dataTransfer.files[0]); });
   $("fLien").addEventListener("input", checkLien);
 
   function resetForm() {
-    editing = null; lastInfos = ""; logicielChoisi = false; cats = new Set(); catsChoisies = false; apps = new Set(); appsChoisies = false; ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).value = ""); $("lienHelp").textContent = "";
+    editing = null; lastInfos = ""; logicielChoisi = false; coverNew = null; coverSuppr = false; cats = new Set(); catsChoisies = false; apps = new Set(); appsChoisies = false; ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).value = ""); $("lienHelp").textContent = "";
     $("save").textContent = "Ajouter"; $("formTitle").textContent = "Ajouter un tuto"; $("cancel").hidden = true;
     setPreview(null); renderSugg(); renderLabels(); renderCats(); renderApps(); renderList();
   }
@@ -992,15 +1033,20 @@ window.ytCover = function (img, failed) {
     if (!checkLien()) { $("fLien").focus(); return; }
     // un tag déjà connu garde l'orthographe enregistrée (ex. « 3d » → « 3D »)
     const known = new Map(allTags().map(x => [norm(x.label), x.label]));
-    const tags = [...new Map(currentTags().map(tg => [norm(tg), known.get(norm(tg)) || tg])).values()];
+    const tags = [...new Map(currentTags().map(tg => [norm(tg), joliNom(known.get(norm(tg)) || tg)])).values()];
     const tuto = { lien: $("fLien").value.trim(), titre: $("fTitre").value.trim(), auteur: $("fAuteur").value.trim(), tags, logiciel, categories: [...cats, ...apps] };
     $("save").disabled = true;
     try {
-      const d = editing ? await api("update", { id: editing, tuto }) : await api("create", { tuto });
+      const extra = { tuto };
+      if (sansCoverAuto() && coverNew) extra.cover = coverNew;
+      if (sansCoverAuto() && coverSuppr && !coverNew) extra.coverSuppr = true;
+      if (!sansCoverAuto() && editing && (tutos.find(x => x.id === editing) || {}).cover) extra.coverSuppr = true;   // devenu un lien YouTube
+      if (extra.cover) $("save").textContent = "Envoi de la cover…";
+      const d = editing ? await api("update", { id: editing, ...extra }) : await api("create", extra);
       setData(d);
       toast(editing ? "Modifié" : "Ajouté");
       resetForm(); $("fLien").focus();
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { toast(err.message, true); $("save").textContent = editing ? "Enregistrer" : "Ajouter"; }
     $("save").disabled = false;
   }
 
@@ -1030,7 +1076,7 @@ window.ytCover = function (img, failed) {
     const row = e.target.closest(".row"); if (!row) return;
     const id = row.dataset.id, t = tutos.find(x => x.id === id);
     if (e.target.classList.contains("edit")) {
-      editing = id;
+      editing = id; coverNew = null; coverSuppr = false; lastPreview = "";
       $("fLien").value = t.lien; $("fTitre").value = t.titre; $("fAuteur").value = t.auteur || ""; $("fTags").value = t.tags.join(", ");
       lastInfos = (parseUrl(t.lien) || {}).id || "";
       logiciel = t.logiciel || LOGICIELS[0];
