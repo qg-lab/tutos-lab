@@ -3,19 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mentions légales &amp; confidentialité — Tutos</title>
+<title>Mentions légales &amp; confidentialité — LAB Experience 360</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#000;--fg:#fff;--muted:#8a8a8a;--red:#E63A24;--pad:20px}
+  :root{--surf:#161616;--surf2:#202020;--surf3:#2a2a2a;--bg:#000;--fg:#fff;--muted:#8a8a8a;--ink:#BDC9C9;--red:#E63A24;--pad:20px}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--fg);font-family:"Geist",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  header{padding:var(--pad);display:flex;justify-content:space-between;align-items:flex-start}
-  header p{font-size:12px;line-height:14px;text-transform:uppercase}
-  header a{color:#8a8a8a;text-decoration:none;font-size:12px;text-transform:uppercase;letter-spacing:.02em;padding-top:12px}
-  header a:hover{color:var(--fg)}
-  main{max-width:720px;padding:60px var(--pad) 120px}
+
+  /* ===== En-tête commun (identique à la page des tutos) ===== */
+  .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid #1a1a1a}
+  header{position:relative;display:flex;justify-content:center;align-items:center;gap:10px;padding:16px var(--pad)}
+  .sig{position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em}
+  .sig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
+  .navlink{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);text-decoration:none;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;transition:color .15s}
+  .navlink:hover,.navlink.on{color:#fff}
+  @media (max-width:1100px){.sig,.navlink{display:none}}
+  .ic-btn svg,.sbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .homebtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none;transition:background .15s,color .15s}
+  .homebtn:hover{background:#222;color:#fff}
+  .homebtn .cycle{width:24px;height:24px;stroke-width:1.4}
+  .homebtn .pt{fill:var(--surf);stroke-width:1.5}
+  .homebtn:hover .pt{fill:#222}
+  .homebtn .go{fill:currentColor;stroke:none}
+  .spill{position:relative;display:flex;align-items:center;height:52px;flex:1;min-width:0;max-width:560px;background:var(--surf);border-radius:3px;padding:0 6px 0 18px;transition:background .15s,box-shadow .15s}
+  .spill:hover{background:var(--surf2)}
+  .spill:focus-within{box-shadow:0 0 0 1px #444}
+  .sbar{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:100%;color:#8f9a9a;cursor:text}
+  .sbar input{flex:1;min-width:0;height:100%;background:none;border:0;outline:none;color:var(--fg);font:inherit;font-size:16px}
+  .sbar input::placeholder{color:#8f9a9a;opacity:1}
+  .spill .sep{width:1px;height:26px;background:#3a3a3a;margin:0 4px 0 10px;flex:none}
+  .catbtn{width:44px;height:44px;border-radius:50%;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;transition:background .15s,color .15s}
+  .catbtn:hover{background:#262626;color:#fff}
+  /* Pied de page commun */
+  .foot{padding:0 var(--pad) 40px;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .foot a{color:#666;text-decoration:none;margin-right:24px}
+  .foot a:hover,.foot a.on{color:var(--fg)}
+  main{max-width:760px;padding:28px var(--pad) 120px}
   h1{font-weight:400;font-size:28px;margin-bottom:48px}
   h2{font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin:40px 0 12px;padding-top:14px;border-top:1px solid #1e1e1e}
   p,li{font-size:15px;line-height:1.55;color:#ddd}
@@ -26,10 +51,23 @@
 </style>
 </head>
 <body>
+<div class="topbar">
 <header>
-  <p>© 2026 — 2027<br>Préparatoire appliquée<br>Outils numériques</p>
-  <span><a href="about.html" style="margin-right:20px">À propos</a><a href="index.html">← Retour aux tutos</a></span>
+  <p class="sig">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</p>
+  <a class="navlink" href="about.html">À propos</a>
+  <a class="homebtn ic-btn" href="index.html" aria-label="Accueil : tous les tutos" title="Lab 360 — Accueil">
+    <svg class="cycle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="go" cx="12" cy="4" r="2.2"/><circle class="pt" cx="18.93" cy="8" r="1.9"/><circle class="pt" cx="18.93" cy="16" r="1.9"/><circle class="pt" cx="12" cy="20" r="1.9"/><circle class="pt" cx="5.07" cy="16" r="1.9"/><circle class="pt" cx="5.07" cy="8" r="1.9"/></svg>
+  </a>
+  <form class="spill" action="index.html" method="get" role="search">
+    <label class="sbar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+      <input type="search" name="q" placeholder="Que souhaitez-vous apprendre aujourd’hui ?" autocomplete="off" spellcheck="false" aria-label="Rechercher un tuto">
+    </label>
+    <span class="sep" aria-hidden="true"></span>
+    <a class="catbtn ic-btn" href="index.html?vue=outils" aria-label="Boîte à outils" title="Boîte à outils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg></a>
+  </form>
 </header>
+</div>
 <main>
   <h1>Mentions légales &amp; confidentialité</h1>
 
@@ -63,5 +101,8 @@
   <h2>Mise à jour</h2>
   <p>Novembre 2026.</p>
 </main>
+<footer class="foot">
+  <a href="about.html">À propos</a><a href="mentions-legales.html" class="on">Mentions légales &amp; confidentialité</a>
+</footer>
 </body>
 </html>

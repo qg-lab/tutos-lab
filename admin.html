@@ -105,10 +105,12 @@ const TAGS_AUTO = {
   button,input{font:inherit;color:inherit}
   .up{font-size:12px;text-transform:uppercase;letter-spacing:.02em}
 
-  header{display:flex;justify-content:space-between;align-items:flex-start;padding:var(--pad);gap:20px}
-  .brand{display:flex;gap:10px;align-items:flex-start}
-  .brand p{font-size:12px;line-height:14px;text-transform:uppercase}
-  .hlinks{display:flex;gap:28px;padding-top:12px}
+  /* En-tête : même logo et même hauteur que le site */
+  header{position:relative;display:flex;justify-content:center;align-items:center;height:85px;padding:0 var(--pad);border-bottom:1px solid #1a1a1a}
+  .sig{position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);color:#BDC9C9;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em}
+  .sig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
+  .bo{height:52px;display:flex;align-items:center;padding:0 20px;background:#161616;border-radius:3px;color:#BDC9C9}
+  .hlinks{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);display:flex;gap:24px}
   .hlinks a,.hlinks button{background:none;border:0;color:#8a8a8a;text-decoration:none;cursor:pointer;text-transform:inherit;letter-spacing:inherit;font-size:inherit}
   .hlinks a:hover,.hlinks button:hover{color:var(--fg)}
 
@@ -196,9 +198,8 @@ const TAGS_AUTO = {
 <body>
 
 <header>
-  <div class="brand">
-    <p>Back office<br>Lab 360</p>
-  </div>
+  <p class="sig">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</p>
+  <p class="bo up">Back office</p>
   <div class="hlinks up">
     <a href="index.html" target="_blank" rel="noopener">Voir le site ↗</a>
     <button type="button" id="logout" hidden>Déconnexion</button>

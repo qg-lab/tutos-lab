@@ -4,26 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>À propos — LAB Experience 360</title>
-<meta name="description" content="LAB Experience 360 : un cours de design graphique expérimental. Observer, capter, produire, transformer, composer, déployer.">
+<meta name="description" content="LAB Experience 360 : un cours de design graphique expérimental où l'on fabrique ses images avant de les composer. Observer, capter, produire, transformer, composer, déployer.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--surf:#161616;--surf2:#202020;--bg:#000;--fg:#fff;--muted:#8a8a8a;--ink:#BDC9C9;--line:#1e1e1e;--red:#E63A24;--pad:20px}
+  :root{--surf:#161616;--surf2:#202020;--surf3:#2a2a2a;--bg:#000;--fg:#fff;--muted:#8a8a8a;--ink:#BDC9C9;--line:#1e1e1e;--red:#E63A24;--pad:20px}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--fg);font-family:"Geist",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
   a{color:inherit}
-  header{padding:var(--pad);display:flex;justify-content:space-between;align-items:center}
-  .home{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:12px;line-height:14px;text-transform:uppercase}
-  .home .r{width:52px;height:52px;border-radius:50%;background:var(--surf);color:var(--ink);display:grid;place-items:center;transition:background .15s,color .15s}
-  .home:hover .r{background:#222;color:#fff}
-  .home .pt{fill:var(--surf)} .home:hover .pt{fill:#222}
-  .back{color:var(--muted);text-decoration:none;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
-  .back:hover{color:var(--fg)}
+
+  /* ===== En-tête commun (identique à la page des tutos) ===== */
+  .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid #1a1a1a}
+  header{position:relative;display:flex;justify-content:center;align-items:center;gap:10px;padding:16px var(--pad)}
+  .sig{position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em}
+  .sig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
+  .navlink{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);text-decoration:none;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;transition:color .15s}
+  .navlink:hover,.navlink.on{color:#fff}
+  @media (max-width:1100px){.sig,.navlink{display:none}}
+  .ic-btn svg,.sbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .homebtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none;transition:background .15s,color .15s}
+  .homebtn:hover{background:#222;color:#fff}
+  .homebtn .cycle{width:24px;height:24px;stroke-width:1.4}
+  .homebtn .pt{fill:var(--surf);stroke-width:1.5}
+  .homebtn:hover .pt{fill:#222}
+  .homebtn .go{fill:currentColor;stroke:none}
+  .spill{position:relative;display:flex;align-items:center;height:52px;flex:1;min-width:0;max-width:560px;background:var(--surf);border-radius:3px;padding:0 6px 0 18px;transition:background .15s,box-shadow .15s}
+  .spill:hover{background:var(--surf2)}
+  .spill:focus-within{box-shadow:0 0 0 1px #444}
+  .sbar{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:100%;color:#8f9a9a;cursor:text}
+  .sbar input{flex:1;min-width:0;height:100%;background:none;border:0;outline:none;color:var(--fg);font:inherit;font-size:16px}
+  .sbar input::placeholder{color:#8f9a9a;opacity:1}
+  .spill .sep{width:1px;height:26px;background:#3a3a3a;margin:0 4px 0 10px;flex:none}
+  .catbtn{width:44px;height:44px;border-radius:50%;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;transition:background .15s,color .15s}
+  .catbtn:hover{background:#262626;color:#fff}
+  /* Pied de page commun */
+  .foot{padding:0 var(--pad) 40px;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .foot a{color:#666;text-decoration:none;margin-right:24px}
+  .foot a:hover,.foot a.on{color:var(--fg)}
   svg.cy{fill:none;stroke:currentColor;stroke-linecap:round}
   svg.cy .go{fill:currentColor;stroke:none}
 
-  .hero{padding:12vh var(--pad) 10vh;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:center;max-width:1280px;margin:0 auto}
+  .hero{padding:28px var(--pad) 10vh;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:center;margin:0}
   .kick{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:24px}
   h1{font-weight:400;font-size:clamp(44px,7.5vw,112px);line-height:.95;letter-spacing:-.03em;text-transform:uppercase}
   h1 span{color:var(--red)}
@@ -31,7 +53,7 @@
   .big{justify-self:center;width:min(100%,360px);color:var(--ink)}
   .big .pt{fill:var(--bg)}
 
-  .steps{list-style:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);max-width:1280px;margin:0 auto}
+  .steps{list-style:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0}
   .steps li{padding:28px var(--pad) 36px;border-left:1px solid var(--line);transition:background .2s}
   .steps li:first-child{border-left:0}
   .steps li:hover{background:var(--surf)}
@@ -41,20 +63,18 @@
   .steps h3{font-weight:500;font-size:clamp(14px,1.25vw,18px);text-transform:uppercase;letter-spacing:.01em;margin:40px 0 10px}
   .steps p{font-size:14px;line-height:1.45;color:var(--muted)}
 
-  .txt{max-width:1280px;margin:0 auto;padding:12vh var(--pad);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:40px}
+  .txt{margin:0;padding:12vh var(--pad);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:40px}
   .txt h2{font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding-top:6px}
   .txt p{font-size:clamp(18px,1.8vw,24px);line-height:1.4;color:#ddd;max-width:30em}
   .txt p+p{margin-top:20px}
   .txt + .txt{padding-top:0}
 
   .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
-  .tools span{background:var(--surf);border-radius:999px;padding:10px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink)}
+  .tools span{background:var(--surf);border-radius:3px;padding:10px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink)}
 
-  .cta{max-width:1280px;margin:0 auto;padding:0 var(--pad) 14vh}
-  .cta a{display:inline-flex;align-items:center;gap:12px;background:var(--surf);border-radius:999px;padding:16px 22px;text-decoration:none;font-size:12px;text-transform:uppercase;letter-spacing:.02em;transition:background .15s}
-  .cta a:hover{background:var(--red)}
-  footer{padding:var(--pad);border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
-  footer a{text-decoration:none} footer a:hover{color:var(--fg)}
+  .cta{margin:0;padding:0 var(--pad) 14vh}
+  .cta a{display:inline-flex;align-items:center;gap:12px;background:var(--surf);border-radius:3px;height:52px;padding:0 20px;color:var(--ink);text-decoration:none;font-size:12px;text-transform:uppercase;letter-spacing:.02em;transition:background .15s}
+  .cta a:hover{background:var(--red);color:#fff}
 
   @media (max-width:900px){
     .hero{grid-template-columns:1fr;padding-top:6vh}
@@ -68,56 +88,65 @@
 </head>
 <body>
 
+<div class="topbar">
 <header>
-  <a class="home" href="index.html" title="Retour aux tutos">
-    <span class="r"><svg class="cy" viewBox="0 0 24 24" width="24" height="24" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="go" cx="12" cy="4" r="2.2"/><circle class="pt" cx="18.93" cy="8" r="1.9" stroke-width="1.5"/><circle class="pt" cx="18.93" cy="16" r="1.9" stroke-width="1.5"/><circle class="pt" cx="12" cy="20" r="1.9" stroke-width="1.5"/><circle class="pt" cx="5.07" cy="16" r="1.9" stroke-width="1.5"/><circle class="pt" cx="5.07" cy="8" r="1.9" stroke-width="1.5"/></svg></span>
-    <span>Lab<br>360</span>
+  <p class="sig">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</p>
+  <a class="navlink on" href="about.html">À propos</a>
+  <a class="homebtn ic-btn" href="index.html" aria-label="Accueil : tous les tutos" title="Lab 360 — Accueil">
+    <svg class="cycle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="go" cx="12" cy="4" r="2.2"/><circle class="pt" cx="18.93" cy="8" r="1.9"/><circle class="pt" cx="18.93" cy="16" r="1.9"/><circle class="pt" cx="12" cy="20" r="1.9"/><circle class="pt" cx="5.07" cy="16" r="1.9"/><circle class="pt" cx="5.07" cy="8" r="1.9"/></svg>
   </a>
-  <a class="back" href="index.html">← Retour aux tutos</a>
+  <form class="spill" action="index.html" method="get" role="search">
+    <label class="sbar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+      <input type="search" name="q" placeholder="Que souhaitez-vous apprendre aujourd’hui ?" autocomplete="off" spellcheck="false" aria-label="Rechercher un tuto">
+    </label>
+    <span class="sep" aria-hidden="true"></span>
+    <a class="catbtn ic-btn" href="index.html?vue=outils" aria-label="Boîte à outils" title="Boîte à outils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg></a>
+  </form>
 </header>
+</div>
 
 <main>
   <section class="hero">
     <div>
-      <p class="kick">Design graphique expérimental</p>
+      <p class="kick">À propos — Design graphique expérimental</p>
       <h1>LAB<br>Experience <span>360</span></h1>
-      <p class="lead">Un cours pour sortir de l'écran et remettre l'observation, l'expérimentation et la production d'images au cœur du processus créatif.</p>
+      <p class="lead">Fabriquer ses images avant de les composer. Au Lab, le crayon, l'appareil photo, la matière et l'écran travaillent ensemble.</p>
     </div>
     <svg class="cy big" viewBox="0 0 24 24" stroke-width=".35" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="go" cx="12" cy="4" r="1.1"/><circle class="pt" cx="18.93" cy="8" r=".9" stroke-width=".35"/><circle class="pt" cx="18.93" cy="16" r=".9" stroke-width=".35"/><circle class="pt" cx="12" cy="20" r=".9" stroke-width=".35"/><circle class="pt" cx="5.07" cy="16" r=".9" stroke-width=".35"/><circle class="pt" cx="5.07" cy="8" r=".9" stroke-width=".35"/></svg>
   </section>
 
   <ol class="steps" aria-label="Les six étapes du Lab">
-    <li><div class="n">01<i>→</i></div><h3>Observer</h3><p>Regarder autour de soi, relever, collecter, avant de créer.</p></li>
-    <li><div class="n">02<i>→</i></div><h3>Capter</h3><p>Enregistrer le réel : dessin, photo, vidéo, scan, son.</p></li>
-    <li><div class="n">03<i>→</i></div><h3>Produire</h3><p>Fabriquer ses propres images, avec la main, la matière, les objets.</p></li>
-    <li><div class="n">04<i>→</i></div><h3>Transformer</h3><p>Détourner, déformer, passer du physique au numérique et retour.</p></li>
-    <li><div class="n">05<i>→</i></div><h3>Composer</h3><p>Assembler un univers de marque, une identité visuelle cohérente.</p></li>
-    <li><div class="n">06<i>↺</i></div><h3>Déployer</h3><p>Décliner sur tous les supports, puis observer à nouveau.</p></li>
+    <li><div class="n">01<i>→</i></div><h3>Observer</h3><p>Regarder avant de faire : relever formes, signes, couleurs et usages dans le réel.</p></li>
+    <li><div class="n">02<i>→</i></div><h3>Capter</h3><p>En garder une trace : croquis, photo, vidéo, scan ou prise de son.</p></li>
+    <li><div class="n">03<i>→</i></div><h3>Produire</h3><p>Créer ses propres images, avec la main, la matière et les objets.</p></li>
+    <li><div class="n">04<i>→</i></div><h3>Transformer</h3><p>Détourner, déformer, numériser : faire passer l'image d'un état à un autre.</p></li>
+    <li><div class="n">05<i>→</i></div><h3>Composer</h3><p>Organiser ces images en un langage : une identité, un univers, un système.</p></li>
+    <li><div class="n">06<i>↺</i></div><h3>Déployer</h3><p>Décliner sur les supports, tester en situation… puis recommencer à observer.</p></li>
   </ol>
 
   <section class="txt">
-    <h2>L'idée</h2>
+    <h2>Le principe</h2>
     <div>
-      <p>Sortir d'une approche uniquement numérique ou infographique pour remettre l'observation, l'expérimentation et la production d'images au cœur du processus créatif.</p>
-      <p>À travers le dessin, la photographie, la vidéo, la matière, les objets ou les outils numériques, les étudiants explorent différentes façons de construire des univers de marque et des identités visuelles, à partir de sujets réels ou fictifs.</p>
+      <p>Ici, le numérique n'est pas le point de départ. Une image commence par un regard posé sur le réel, passe par la main, l'objectif ou la matière, et n'arrive à l'écran qu'ensuite.</p>
+      <p>Chaque technique devient un terrain d'expérimentation. À partir de sujets réels ou imaginaires, les étudiants construisent des identités visuelles et des univers de marque qui leur ressemblent.</p>
       <div class="tools"><span>Dessin</span><span>Photographie</span><span>Vidéo</span><span>Matière</span><span>Objets</span><span>Outils numériques</span></div>
     </div>
   </section>
 
   <section class="txt">
-    <h2>Un espace pour expérimenter</h2>
+    <h2>Pourquoi maintenant</h2>
     <div>
-      <p>Un lieu où développer une écriture graphique personnelle, en faisant dialoguer pratiques physiques et numériques.</p>
-      <p>Un projet qui me tient particulièrement à cœur, dans un contexte où les outils génératifs transforment profondément notre rapport à l'image et à la création.</p>
+      <p>Les outils génératifs produisent des images en quelques secondes. Raison de plus pour apprendre à fabriquer les siennes, et à savoir ce qu'elles racontent.</p>
+      <p>Le Lab est un espace pour chercher, se tromper, recommencer, et faire émerger une écriture graphique personnelle, entre gestes physiques et outils numériques.</p>
     </div>
   </section>
 
-  <div class="cta"><a href="index.html">Explorer les tutos et la boîte à outils →</a></div>
+  <div class="cta"><a href="index.html">Voir les tutos et la boîte à outils →</a></div>
 </main>
 
-<footer>
-  <span>Lab Experience 360 — 2026 · 2027</span>
-  <a href="mentions-legales.html">Mentions légales</a>
+<footer class="foot">
+  <a href="about.html" class="on">À propos</a><a href="mentions-legales.html">Mentions légales &amp; confidentialité</a>
 </footer>
 
 </body>
