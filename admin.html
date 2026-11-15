@@ -169,6 +169,8 @@ const TAGS_AUTO = {
   .qi input:focus{border-color:#fff}
   .qi input.bad{border-color:var(--red)}
   .qi .rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;cursor:pointer}
+  .qi input.qs{font-size:12px;color:#aaa;padding:4px 0}
+  .qi .qc{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.02em}
   .qi .st{font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.02em;min-height:14px}
   .qi .st.ok{color:#7fd17f} .qi .st.err{color:var(--red)} .qi .st.warn{color:#d9b25f}
   .gwall{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px 14px}
@@ -332,7 +334,7 @@ const TAGS_AUTO = {
       <label class="drop" id="gDrop">
         <input type="file" id="gFiles" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
         <b id="gDropT">Glisse les images ici, ou clique pour les choisir</b>
-        <span id="gDropS">Une image par élève. Si le nom du fichier est celui de l'élève (« lea-martin.jpg »), il est repris tout seul.</span>
+        <span id="gDropS">Nomme tes fichiers CLASSE_SUJET_Prénom_Nom (ex. G3_DUC_Zoé_Pureur.jpg) : la classe (G3), le sujet (DUC) et l'élève (Zoé P.) se remplissent tout seuls.</span>
       </label>
       <div class="queue" id="gQueue"></div>
       <div class="actions">
@@ -540,6 +542,36 @@ window.ytCover = function (img, failed) {
     if (w.length === 1) return cap(w[0]);
     return w[0].split("-").map(cap).join("-") + " " + w[w.length - 1].charAt(0).toUpperCase() + ".";
   }
+  /* Nom de fichier → classe, sujet, élève
+     « CLASSE_SUJET_Prénom_Nom.jpg »  ex. G3_DUC_Zoé_Pureur.jpg → G3 · DUC · Zoé P.
+     L'élève peut aussi être collé : G3_DUC_ZoéPureur.jpg
+     Sans classe dans le nom : c'est la classe choisie en haut qui s'applique.
+     Sans « _ » : seulement l'élève (« lea-martin.jpg » → Lea M.) */
+  const CLASSE_MOTS = { prepa: "Prépas", prepas: "Prépas", prep: "Prépas", g2: "G2", g3: "G3" };
+  const isUpper = w => w === w.toUpperCase() && w !== w.toLowerCase();
+  function eleveDe(tokens) {
+    let t = tokens.flatMap(x => x.split(/\s+/)).filter(Boolean);
+    if (t.length === 1 && !t[0].includes("-")) t = t[0].split(/(?<=\p{Ll})(?=\p{Lu})/u);   // ZoéPureur → Zoé Pureur
+    if (!t.length || !t.every(x => /\p{L}/u.test(x))) return "";
+    if (t.length === 1) return cap(t[0]);
+    let prenom = t[0], nom = t[t.length - 1];
+    if (isUpper(prenom) && !isUpper(nom)) [prenom, nom] = [nom, prenom];     // NOM_Prénom accepté aussi
+    return prenom.split("-").map(cap).join("-") + " " + nom.charAt(0).toUpperCase() + ".";
+  }
+  function parseFichier(fname) {
+    const base = String(fname || "").replace(/\.[a-z0-9]{2,4}$/i, "").normalize("NFC").trim();
+    if (!base.includes("_")) return { nom: formatNom(base), sujet: "", classe: "" };
+    let parts = base.split("_").map(x => x.trim()).filter(Boolean), classe = "";
+    parts = parts.filter(x => { const c = CLASSE_MOTS[norm(x).replace(/\s+/g, "")]; if (c && !classe) { classe = c; return false; } return true; });
+    // photos d'appareil (IMG_2034, DSC_0012…) : rien à deviner
+    if (!parts.length || /^(img|dsc|dscn|pxl|photo|image|scan|screenshot|capture|whatsapp)$/i.test(parts[0]) || !/\p{L}/u.test(parts[0]))
+      return { nom: "", sujet: "", classe };
+    if (parts.length === 1) return { nom: "", sujet: "", classe };
+    let sujet = parts[0].replace(/-+/g, " ").replace(/\s+/g, " ").trim();
+    const connu = sujetsDe("").find(x => norm(x) === norm(sujet));            // garde l'orthographe d'un sujet existant
+    sujet = connu || sujet.charAt(0).toUpperCase() + sujet.slice(1);
+    return { nom: eleveDe(parts.slice(1)), sujet, classe };
+  }
   const sujetsDe = c => [...new Map(galerie.filter(g => !c || norm(g.classe) === norm(c)).map(g => [norm(g.sujet), g.sujet])).values()];
   const existe = (c, s, e) => galerie.find(g => norm(g.classe) === norm(c) && norm(g.sujet) === norm(s) && norm(g.eleve) === norm(e) && (!gEdit || g.id !== gEdit));
 
@@ -572,15 +604,18 @@ window.ytCover = function (img, failed) {
     renderQueue(); renderGList();
   }
   function renderQueue() {
-    const c = gClasse, s = $("gSujet").value.trim();
+    const defS = $("gSujet").value.trim();
     $("gQueue").innerHTML = gQueue.map((q, i) => {
+      const c = q.classe || gClasse, s = q.sujet || defS;
       const dup = c && s && q.nom && existe(c, s, q.nom);
       const st = q.st || (dup ? "Remplacera l'image en ligne" : "");
       const cls = q.cls || (dup ? "warn" : "");
       return `<div class="qi" data-i="${i}">
         <div class="th"><img src="${q.url}" alt=""></div>
         ${q.done ? "" : `<button type="button" class="rm" title="Retirer" aria-label="Retirer">✕</button>`}
-        <input type="text" value="${esc(q.nom)}" placeholder="Prénom Nom" aria-label="Nom de l'élève" ${q.done || gBusy ? "disabled" : ""}>
+        <input type="text" data-f="nom" value="${esc(q.nom)}" placeholder="Prénom Nom" aria-label="Nom de l'élève" ${q.done || gBusy ? "disabled" : ""}>
+        ${gEdit ? "" : `<input type="text" data-f="sujet" class="qs" value="${esc(q.sujet || "")}" placeholder="${esc(defS || "Sujet")}" aria-label="Sujet" ${q.done || gBusy ? "disabled" : ""}>
+        <span class="qc">${esc(c || "Classe ?")}${q.classe ? "" : (gClasse ? "" : "")}</span>`}
         <span class="st ${cls}">${esc(st)}</span></div>`;
     }).join("");
     $("gEleveField").hidden = !gEdit;
@@ -597,9 +632,12 @@ window.ytCover = function (img, failed) {
       $("gSend").textContent = gBusy ? "Enregistrement…" : "Enregistrer";
       return;
     }
-    $("gSend").disabled = gBusy || !okBase || !todo.length;
+    const defS = $("gSujet").value.trim();
+    const sansClasse = todo.some(q => !(q.classe || gClasse)), sansSujet = todo.some(q => !(q.sujet || defS));
+    $("gSend").disabled = gBusy || !todo.length || sansClasse || sansSujet;
     $("gSend").textContent = gBusy ? $("gSend").textContent
-      : !gClasse ? "Choisis une classe" : !okBase ? "Indique le sujet" : !todo.length ? "Ajoute des images"
+      : !todo.length ? (!gClasse ? "Choisis une classe" : !defS ? "Indique le sujet" : "Ajoute des images")
+      : sansClasse ? "Choisis une classe" : sansSujet ? "Indique le sujet"
       : `Envoyer ${todo.length} projet${todo.length > 1 ? "s" : ""}`;
   }
   function addFiles(files) {
@@ -607,7 +645,12 @@ window.ytCover = function (img, failed) {
     if (!imgs.length) return toast("Formats acceptés : JPG, PNG, WebP ou GIF", true);
     if (gEdit) { gQueue = [{ file: imgs[0], url: URL.createObjectURL(imgs[0]), nom: $("gEleve").value }]; renderQueue(); return; }
     gQueue = gQueue.filter(q => !q.done);
-    imgs.forEach(f => gQueue.push({ file: f, url: URL.createObjectURL(f), nom: formatNom(f.name) }));
+    imgs.forEach(f => { const r = parseFichier(f.name); gQueue.push({ file: f, url: URL.createObjectURL(f), nom: r.nom, sujet: r.sujet, classe: r.classe }); });
+    // un seul sujet / une seule classe dans les fichiers : on remplit aussi les champs du haut
+    // (seulement si TOUS les fichiers indiquent le même sujet / la même classe)
+    const suj = [...new Set(gQueue.map(q => q.sujet || ""))], cla = [...new Set(gQueue.map(q => q.classe || ""))];
+    if (suj.length === 1 && suj[0] && !$("gSujet").value.trim()) $("gSujet").value = suj[0];
+    if (cla.length === 1 && cla[0] && !gClasse) { gClasse = cla[0]; renderGal(); return; }
     renderQueue();
   }
   $("gClasse").addEventListener("click", e => { const b = e.target.closest(".lab"); if (!b || gBusy) return; gClasse = gClasse === b.dataset.c ? "" : b.dataset.c; renderGal(); });
@@ -623,17 +666,18 @@ window.ytCover = function (img, failed) {
     const rm = e.target.closest(".rm"); if (!rm || gBusy) return;
     const i = +rm.closest(".qi").dataset.i; URL.revokeObjectURL(gQueue[i].url); gQueue.splice(i, 1); renderQueue();
   });
-  $("gQueue").addEventListener("input", e => { const it = e.target.closest(".qi"); if (it) { gQueue[+it.dataset.i].nom = e.target.value; e.target.classList.remove("bad"); updSend(); } });
+  $("gQueue").addEventListener("input", e => { const it = e.target.closest(".qi"); if (it) { gQueue[+it.dataset.i][e.target.dataset.f || "nom"] = e.target.value; e.target.classList.remove("bad"); updSend(); } });
   $("gQueue").addEventListener("focusout", e => {
-    const it = e.target.closest(".qi"); if (!it || e.target.tagName !== "INPUT") return;
+    const it = e.target.closest(".qi"); if (!it || e.target.tagName !== "INPUT" || e.target.dataset.f === "sujet") return;
     const q = gQueue[+it.dataset.i], f = formatNom(e.target.value);
-    if (f && f !== q.nom) { q.nom = f; renderQueue(); }
+    if (f && f !== q.nom) { q.nom = f; e.target.value = f; updSend(); }   // sans tout redessiner : le curseur reste où on clique
   });
 
   $("gSend").addEventListener("click", async () => {
     const classe = gClasse, sujet = $("gSujet").value.trim();
-    if (!classe || !sujet || gBusy) return;
+    if (gBusy) return;
     if (gEdit) {
+      if (!classe || !sujet) return;
       const eleve = formatNom($("gEleve").value) || $("gEleve").value.trim();
       gBusy = true; updSend();
       try {
@@ -648,14 +692,14 @@ window.ytCover = function (img, failed) {
     const todo = gQueue.filter(q => !q.done);
     let manque = false;
     todo.forEach(q => { q.nom = formatNom(q.nom) || q.nom.trim(); if (!q.nom) manque = true; });
-    if (manque) { renderQueue(); $("gQueue").querySelectorAll(".qi input").forEach((inp, i) => { if (!gQueue[i].nom) inp.classList.add("bad"); }); return toast("Indique le nom de chaque élève", true); }
+    if (manque) { renderQueue(); $("gQueue").querySelectorAll('.qi input[data-f="nom"]').forEach((inp, i) => { if (!gQueue[i].nom) inp.classList.add("bad"); }); return toast("Indique le nom de chaque élève", true); }
     gBusy = true; let n = 0;
     for (const q of todo) {
       $("gSend").textContent = `Envoi… ${n + 1} / ${todo.length}`;
       q.st = "Envoi…"; q.cls = ""; renderQueue();
       try {
         const image = await prepare(q.file);
-        setData(await api("galerieAjout", { projet: { classe, sujet, eleve: q.nom }, image }));
+        setData(await api("galerieAjout", { projet: { classe: q.classe || classe, sujet: (q.sujet || "").trim() || sujet, eleve: q.nom }, image }));
         q.done = true; q.st = "En ligne ✓"; q.cls = "ok"; n++;
       } catch (err) { q.st = err.message; q.cls = "err"; }
       renderQueue(); renderGList();
