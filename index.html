@@ -17,7 +17,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3
 /* =====================================================================
    LISTE DES TUTOS (utilisée seulement si API_URL est vide)
    Chaque tuto s'écrit comme ceci (titre et tags facultatifs) :
-     { url: "https://www.youtube.com/shorts/xxxxxxxxxxx", titre: "Détourage rapide", categories: ["Photo"], tags: ["détourage", "sélection"] },
+     { url: "https://www.youtube.com/shorts/xxxxxxxxxxx", titre: "Détourage rapide", categories: ["Photo", "Transformer"], tags: ["détourage", "sélection"] },
    Un lien seul entre guillemets fonctionne aussi :
      "https://www.youtube.com/shorts/xxxxxxxxxxx",
    Les tags apparaissent automatiquement dans la barre de filtres.
@@ -132,13 +132,22 @@ const BOITE = [
 
   /* En-tête : élément centré (Accueil + recherche + catégories) */
   .topbar{position:sticky;top:0;z-index:30;background:var(--bg)}
-  header{display:flex;justify-content:center;align-items:center;gap:10px;padding:16px var(--pad)}
+  header{position:relative;display:flex;justify-content:center;align-items:center;gap:10px;padding:16px var(--pad)}
+  /* Signature en haut à gauche (lien vers la page « Le Lab ») */
+  .sig{position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);text-decoration:none;font-size:19px;line-height:20px;text-transform:uppercase;letter-spacing:-.005em;transition:color .15s}
+  .sig:hover{color:#fff}
+  .sig .inf{display:inline-block;width:1.1em;height:.58em;vertical-align:.03em;fill:none;stroke:currentColor;stroke-width:1.15}
+  @media (max-width:1100px){.sig{display:none}}
   .ic-btn svg,.sbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
   .homebtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;transition:background .15s,color .15s}
   .homebtn:hover{background:#222;color:#fff}
   .homebtn.on{color:#fff}
+  .homebtn .cycle{width:24px;height:24px;stroke-width:1.4}
+  .homebtn .pt{fill:var(--surf);stroke-width:1.5}
+  .homebtn:hover .pt{fill:#222}
+  .homebtn .go{fill:currentColor;stroke:none}
   .homebtn.on svg{fill:currentColor;fill-opacity:.12}
-  .spill{position:relative;display:flex;align-items:center;height:52px;flex:1;min-width:0;max-width:560px;background:var(--surf);border-radius:999px;padding:0 6px 0 18px;transition:background .15s,box-shadow .15s}
+  .spill{position:relative;display:flex;align-items:center;height:52px;flex:1;min-width:0;max-width:560px;background:var(--surf);border-radius:3px;padding:0 6px 0 18px;transition:background .15s,box-shadow .15s}
   .spill:hover{background:var(--surf2)}
   .spill:focus-within{box-shadow:0 0 0 1px #444}
   .sbar{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:100%;color:#8f9a9a;cursor:text}
@@ -217,13 +226,13 @@ const BOITE = [
   .fbar{background:var(--bg);border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;
     display:flex;align-items:center;gap:10px;padding:10px var(--pad);flex-wrap:wrap}
   .dd{position:relative}
-  .ddbtn{background:var(--surf);border:0;border-radius:999px;height:36px;padding:0 14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:var(--ink);transition:background .15s,color .15s}
+  .ddbtn{background:var(--surf);border:0;border-radius:3px;height:36px;padding:0 14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:var(--ink);transition:background .15s,color .15s}
   .ddbtn:hover{background:var(--surf2);color:#fff}
   .dd.open .ddbtn{background:var(--surf3);color:#fff}
   .ddbtn .n{background:var(--red);color:#fff;border-radius:999px;font-size:10px;min-width:17px;height:17px;display:inline-grid;place-items:center;padding:0 5px}
   .ddbtn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .2s}
   .dd.open .ddbtn svg{transform:rotate(180deg)}
-  .panel{position:absolute;top:calc(100% + 10px);left:0;width:300px;background:var(--surf);border:0;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.7);
+  .panel{position:absolute;top:calc(100% + 10px);left:0;width:300px;background:var(--surf);border:0;border-radius:4px;box-shadow:0 24px 60px rgba(0,0,0,.7);
     display:none;flex-direction:column;max-height:min(460px,70vh);z-index:40;overflow:hidden;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
   .dd.open .panel{display:flex}
   .panel .ps{border-bottom:1px solid var(--surf3);padding:12px 16px}
@@ -236,6 +245,8 @@ const BOITE = [
   .opt.on .box{background:var(--red);border-color:var(--red)}
   .opt.on .box::after{content:"";width:6px;height:3px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
   .opt .lbl{flex:1}
+  .opt .lbl .num{font-style:normal;color:#555;margin-right:10px;font-size:12px}
+  .opt.on .lbl .num{color:var(--red)}
   .opt .c{color:#666;font-size:12px}
   .opt.zero{opacity:.35}
   .pfoot2{border-top:1px solid var(--surf3);padding:10px 16px;display:flex;justify-content:space-between}
@@ -244,7 +255,7 @@ const BOITE = [
   .pempty2{padding:12px;color:#666;font-size:13px}
 
   .active{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
-  .pill{text-transform:none;letter-spacing:0;display:flex;gap:6px;align-items:center;background:var(--surf);border:0;border-radius:999px;height:36px;padding:0 12px 0 14px;cursor:pointer;font-size:13px;color:#fff}
+  .pill{text-transform:none;letter-spacing:0;display:flex;gap:6px;align-items:center;background:var(--surf);border:0;border-radius:3px;height:36px;padding:0 12px 0 14px;cursor:pointer;font-size:13px;color:#fff}
   .pill:hover{background:var(--surf2)}
   .pill i{font-style:normal;color:#888}
   .clear{background:none;border:0;color:#8a8a8a;cursor:pointer;text-decoration:underline;font-size:12px}
@@ -310,6 +321,7 @@ const BOITE = [
   .foot .out:hover{color:#fff}
   .foot{padding:0 var(--pad) 40px}
   .foot a{color:#666;text-decoration:none}
+  .foot a.lab{margin-right:24px}
   .foot a:hover{color:var(--fg)}
 
   @media (max-width:1200px){ .grid{grid-template-columns:repeat(5,1fr)} nav{gap:36px} }
@@ -334,14 +346,15 @@ const BOITE = [
 
 <div class="topbar">
 <header>
-  <button class="homebtn ic-btn" id="home" type="button" aria-label="Accueil : tous les tutos par logiciel" title="Accueil">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5a1.5 1.5 0 0 0-1.5-1.5h-3A1.5 1.5 0 0 0 9 15v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>
+  <a class="sig" href="about.html" title="Le Lab">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</a>
+  <button class="homebtn ic-btn" id="home" type="button" aria-label="Accueil Lab 360 : observer, capter, produire, transformer, composer, déployer" title="Lab 360 — Accueil">
+    <svg class="cycle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="go" cx="12" cy="4" r="2.2"/><circle class="pt" cx="18.93" cy="8" r="1.9"/><circle class="pt" cx="18.93" cy="16" r="1.9"/><circle class="pt" cx="12" cy="20" r="1.9"/><circle class="pt" cx="5.07" cy="16" r="1.9"/><circle class="pt" cx="5.07" cy="8" r="1.9"/></svg>
   </button>
   <div class="spill">
     <label class="sbar">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
       <input type="search" id="q" placeholder="Que souhaitez-vous apprendre aujourd’hui ?" autocomplete="off" spellcheck="false"
-        aria-label="Rechercher un tuto, un logiciel, une catégorie ou un tag" role="combobox" aria-expanded="false" aria-controls="sugg">
+        aria-label="Rechercher un tuto, un logiciel, une catégorie, une approche ou un tag" role="combobox" aria-expanded="false" aria-controls="sugg">
     </label>
     <button type="button" class="qclear" id="qClear" aria-label="Effacer la recherche" hidden>✕</button>
     <span class="sep" aria-hidden="true"></span>
@@ -367,6 +380,14 @@ const BOITE = [
       <div class="pfoot2"><button type="button" data-clear>Effacer</button><button type="button" data-close>Fermer</button></div>
     </div>
   </div>
+  <div class="dd" id="ddApp">
+    <button class="ddbtn" type="button" aria-haspopup="true">Approche <span class="n" hidden></span>
+      <svg viewBox="0 0 10 10"><path d="M1 3l4 4 4-4"/></svg></button>
+    <div class="panel" role="menu">
+      <div class="opts"></div>
+      <div class="pfoot2"><button type="button" data-clear>Effacer</button><button type="button" data-close>Fermer</button></div>
+    </div>
+  </div>
   <div class="dd" id="ddTag">
     <button class="ddbtn" type="button" aria-haspopup="true">Tags <span class="n" hidden></span>
       <svg viewBox="0 0 10 10"><path d="M1 3l4 4 4-4"/></svg></button>
@@ -386,7 +407,7 @@ const BOITE = [
 
 <main id="top"><div id="results"></div><p class="empty" id="empty" hidden></p></main>
 
-<footer class="foot up"><a href="mentions-legales.html">Mentions légales &amp; confidentialité</a><button type="button" class="out" id="logout" hidden>Se déconnecter</button></footer>
+<footer class="foot up"><a href="about.html" class="lab">Le Lab</a><a href="mentions-legales.html">Mentions légales &amp; confidentialité</a><button type="button" class="out" id="logout" hidden>Se déconnecter</button></footer>
 
 <div class="gate" id="gate" hidden>
   <form id="gateForm" autocomplete="off">
@@ -396,7 +417,7 @@ const BOITE = [
     <button type="button" class="go2" id="gateBtn">Entrer</button>
     <p class="err" id="gateErr"></p>
   </form>
-  <p class="legal"><a href="mentions-legales.html">Mentions légales</a></p>
+  <p class="legal"><a href="about.html">Le Lab</a> · <a href="mentions-legales.html">Mentions légales</a></p>
 </div>
 
 <script>
@@ -433,7 +454,10 @@ window.ytCover = function (img, failed) {
   }
   let ALL = [];                  // tous les tutos
   const tagLabel = new Map();    // clé normalisée -> libellé affiché
-  const typoLabel = new Map();   // catégories (Web, Print…)
+  // Approche du Lab 360 : les six étapes, dans l'ordre (colonne « categories » de la base)
+  const APPROCHES = ["Observer", "Capter", "Produire", "Transformer", "Composer", "Déployer"];
+  const appLabel = new Map(APPROCHES.map(a => [norm(a), a]));
+  const typoLabel = new Map();   // catégories (Web, Print, Motion, 3D…)
 
   function addTuto(o, cat, order) {
     const t = parseUrl(o.url || o.lien || "");
@@ -442,12 +466,16 @@ window.ytCover = function (img, failed) {
     t.auteur = (o.auteur || "").trim();
     t.tags = (o.tags || []).map(s => String(s).trim()).filter(Boolean);
     t.tagKeys = t.tags.map(norm);
-    t.typos = (o.categories || []).map(s => String(s).trim()).filter(Boolean);
+    // la colonne « categories » contient à la fois les catégories et les étapes de l'approche
+    const vals = (o.categories || []).map(s => String(s).trim()).filter(Boolean);
+    t.apps = vals.filter(s => appLabel.has(norm(s)));
+    t.appKeys = t.apps.map(norm);
+    t.typos = vals.filter(s => !appLabel.has(norm(s)));
     t.typoKeys = t.typos.map(norm);
     t.typos.forEach(c => { if (!typoLabel.has(norm(c))) typoLabel.set(norm(c), c); });
     t.tags.forEach(tg => { if (!tagLabel.has(norm(tg))) tagLabel.set(norm(tg), tg); });
     t.cat = cat; t.order = order;
-    t.hay = norm([t.titre, t.auteur, cat.label, ...t.tags, ...t.typos].join(" "));
+    t.hay = norm([t.titre, t.auteur, cat.label, ...t.tags, ...t.typos, ...t.apps].join(" "));
     ALL.push(t);
   }
 
@@ -479,11 +507,12 @@ window.ytCover = function (img, failed) {
   }
 
   /* ---------- État des filtres (gardé dans l'adresse, pour partager un lien filtré) ---------- */
-  const state = { view: "home", cols: new Set(), typos: new Set(), tags: new Set(), q: "", sort: "recent" };
+  const state = { view: "home", cols: new Set(), typos: new Set(), apps: new Set(), tags: new Set(), q: "", sort: "recent" };
   function readUrl() {
     const p = new URLSearchParams(location.search);
     (p.get("logiciel") || "").split(",").filter(Boolean).forEach(c => state.cols.add(c));
     (p.get("categorie") || "").split(",").filter(Boolean).forEach(c => state.typos.add(norm(c)));
+    (p.get("approche") || "").split(",").filter(Boolean).forEach(c => state.apps.add(norm(c)));
     (p.get("tags") || "").split(",").filter(Boolean).forEach(t => state.tags.add(norm(t)));
     state.q = p.get("q") || "";
     state.sort = p.get("tri") === "az" ? "az" : "recent";
@@ -493,6 +522,7 @@ window.ytCover = function (img, failed) {
     const p = new URLSearchParams();
     if (state.cols.size) p.set("logiciel", [...state.cols].join(","));
     if (state.typos.size) p.set("categorie", [...state.typos].join(","));
+    if (state.apps.size) p.set("approche", [...state.apps].join(","));
     if (state.tags.size) p.set("tags", [...state.tags].join(","));
     if (state.q) p.set("q", state.q);
     if (state.sort === "az") p.set("tri", "az");
@@ -500,11 +530,12 @@ window.ytCover = function (img, failed) {
     try { history.replaceState(null, "", (p.toString() ? "?" + p : location.pathname) ); } catch (e) {}
   }
 
-  /* ---------- Filtrage (logiciels et catégories : l'un ou l'autre ; tags : tous requis) ---------- */
+  /* ---------- Filtrage (logiciels, catégories, approches : l'un ou l'autre ; tags : tous requis) ---------- */
   const words = () => norm(state.q).split(/\s+/).filter(Boolean);
-  function match(t, { skipCols = false, skipTypos = false, skipTags = false } = {}) {
+  function match(t, { skipCols = false, skipTypos = false, skipApps = false, skipTags = false } = {}) {
     if (!skipCols && state.cols.size && !state.cols.has(t.cat.id)) return false;
     if (!skipTypos && state.typos.size && !t.typoKeys.some(k => state.typos.has(k))) return false;
+    if (!skipApps && state.apps.size && !t.appKeys.some(k => state.apps.has(k))) return false;
     if (!skipTags) for (const k of state.tags) if (!t.tagKeys.includes(k)) return false;
     return words().every(w => t.hay.includes(w));
   }
@@ -519,7 +550,7 @@ window.ytCover = function (img, failed) {
       : list.sort((a, b) => b.order - a.order);
     const out = $("results");
     out.innerHTML = "";
-    const filtering = state.cols.size || state.typos.size || state.tags.size || state.q;
+    const filtering = state.cols.size || state.typos.size || state.apps.size || state.tags.size || state.q;
     const mkGrid = items => { const g = document.createElement("div"); g.className = "grid"; items.forEach(t => g.appendChild(t.el || (t.el = makeItem(t)))); return g; };
     if (filtering) out.appendChild(mkGrid(list));
     else CATEGORIES.forEach(c => {          // Accueil : tutos rangés par logiciel
@@ -607,7 +638,7 @@ window.ytCover = function (img, failed) {
     $("ddCol").querySelector(".opts").innerHTML = colOpts;
     setBadge("ddCol", state.cols.size);
 
-    // Catégories des tutos (Web, Print…)
+    // Catégories des tutos (Web, Print, Motion, 3D…)
     const typKeys = [...typoLabel.keys()].sort((a, b) => typoLabel.get(a).localeCompare(typoLabel.get(b), "fr"));
     $("ddTyp").querySelector(".opts").innerHTML = typKeys.length ? typKeys.map(k => {
       const n = ALL.filter(t => t.typoKeys.includes(k) && match(t, { skipTypos: true })).length;
@@ -615,6 +646,14 @@ window.ytCover = function (img, failed) {
         <span class="box"></span><span class="lbl">${esc(typoLabel.get(k))}</span><span class="c">${n}</span></button>`;
     }).join("") : `<p class="pempty2">Les catégories apparaîtront ici.</p>`;
     setBadge("ddTyp", state.typos.size);
+
+    // Approche : les six étapes du Lab, toujours dans l'ordre du cycle
+    $("ddApp").querySelector(".opts").innerHTML = [...appLabel.keys()].map((k, i) => {
+      const n = ALL.filter(t => t.appKeys.includes(k) && match(t, { skipApps: true })).length;
+      return `<button type="button" class="opt${state.apps.has(k) ? " on" : ""}${n ? "" : " zero"}" data-v="${esc(k)}" role="menuitemcheckbox" aria-checked="${state.apps.has(k)}">
+        <span class="box"></span><span class="lbl"><em class="num">0${i + 1}</em>${esc(appLabel.get(k))}</span><span class="c">${n}</span></button>`;
+    }).join("");
+    setBadge("ddApp", state.apps.size);
 
 
 
@@ -653,6 +692,7 @@ window.ytCover = function (img, failed) {
   }
   wireDropdown("ddCol", state.cols);
   wireDropdown("ddTyp", state.typos);
+  wireDropdown("ddApp", state.apps);
   wireDropdown("ddTag", state.tags);
   document.addEventListener("click", () => document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open")));
   document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open")); });
@@ -663,6 +703,7 @@ window.ytCover = function (img, failed) {
     if (state.q) pills.push(`<button type="button" class="pill q" data-k="q">« ${esc(state.q)} » <i>✕</i></button>`);
     state.cols.forEach(c => { const cat = CATEGORIES.find(x => x.id === c); if (cat) pills.push(`<button type="button" class="pill" data-k="c" data-v="${c}">${esc(cat.label)} <i>✕</i></button>`); });
     state.typos.forEach(k => pills.push(`<button type="button" class="pill" data-k="y" data-v="${esc(k)}">${esc(typoLabel.get(k) || k)} <i>✕</i></button>`));
+    state.apps.forEach(k => pills.push(`<button type="button" class="pill" data-k="a" data-v="${esc(k)}">${esc(appLabel.get(k) || k)} <i>✕</i></button>`));
     state.tags.forEach(k => pills.push(`<button type="button" class="pill" data-k="t" data-v="${esc(k)}">#${esc(tagLabel.get(k) || k)} <i>✕</i></button>`));
     if (pills.length > 1) pills.push(`<button type="button" class="clear" data-k="all">Tout effacer</button>`);
     $("active").innerHTML = pills.join("");
@@ -670,11 +711,11 @@ window.ytCover = function (img, failed) {
   $("active").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
     const k = b.dataset.k, v = b.dataset.v;
-    if (k === "q") state.q = ""; if (k === "c") state.cols.delete(v); if (k === "t") state.tags.delete(v); if (k === "y") state.typos.delete(v);
+    if (k === "q") state.q = ""; if (k === "c") state.cols.delete(v); if (k === "t") state.tags.delete(v); if (k === "y") state.typos.delete(v); if (k === "a") state.apps.delete(v);
     if (k === "all") return clearAll();
     render();
   });
-  function clearAll() { state.view = "home"; state.cols.clear(); state.typos.clear(); state.tags.clear(); state.q = ""; render(); }
+  function clearAll() { state.view = "home"; state.cols.clear(); state.typos.clear(); state.apps.clear(); state.tags.clear(); state.q = ""; render(); }
 
   $("sort").addEventListener("click", () => { state.sort = state.sort === "az" ? "recent" : "az"; render(); });
 
@@ -718,7 +759,8 @@ window.ytCover = function (img, failed) {
   const qIn = $("q"), sugg = $("sugg"), sList = $("suggList");
   let rows = [], sel = -1, qTimer;
   const ICON_SEARCH = `<span class="vis"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg></span>`;
-  const ICON_CAT = `<span class="vis"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg></span>`;
+  const ICON_TYP = `<span class="vis"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></span>`;
+  const ICON_CAT = `<span class="vis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2" fill="currentColor" stroke="none"/></svg></span>`;
   function hl(text, ws) {
     if (!ws.length) return esc(text);
     const n = norm(text), marks = [];
@@ -749,8 +791,12 @@ window.ytCover = function (img, failed) {
       run: () => { state.q = ""; state.cols.clear(); state.cols.add(c.id); render(); } }))]);
     const typs = [...typoLabel.entries()].map(([k, l]) => [k, l, ALL.filter(t => t.typoKeys.includes(k)).length]).filter(([k, l, n]) => n && raw && has(l));
     if (typs.length) groups.push(["Catégories", typs.map(([k, l, n]) => ({
-      html: `${ICON_CAT}<span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
+      html: `${ICON_TYP}<span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
       run: () => { state.q = ""; state.typos.clear(); state.typos.add(k); render(); } }))]);
+    const apps = [...appLabel.entries()].map(([k, l]) => [k, l, ALL.filter(t => t.appKeys.includes(k)).length]).filter(([k, l, n]) => n && raw && has(l));
+    if (apps.length) groups.push(["Approche", apps.map(([k, l, n]) => ({
+      html: `${ICON_CAT}<span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
+      run: () => { state.q = ""; state.apps.clear(); state.apps.add(k); render(); } }))]);
     const tags = [...tagLabel.entries()].map(([k, l]) => [k, l, ALL.filter(t => t.tagKeys.includes(k)).length]).filter(([k, l, n]) => n && raw && has(l)).slice(0, 6);
     if (tags.length) groups.push(["Tags", tags.map(([k, l, n]) => ({
       html: `<span class="vis hash">#</span><span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
@@ -761,7 +807,7 @@ window.ytCover = function (img, failed) {
       keepView: true, run: () => openLink(it.lien) }))]);
     let html = rows.length ? `<button type="button" class="opt go" data-i="0" role="option">${rows[0].html}</button>` : "";
     groups.forEach(([label, list]) => { html += `<p class="ph">${label}</p>`; list.forEach(r => { html += `<button type="button" class="opt" data-i="${rows.length}" role="option">${r.html}</button>`; rows.push(r); }); });
-    if (!groups.length && raw) html += `<p class="pempty2">Aucun tuto, logiciel, catégorie ou tag ne correspond.</p>`;
+    if (!groups.length && raw) html += `<p class="pempty2">Aucun tuto, logiciel, catégorie, approche ou tag ne correspond.</p>`;
     sList.innerHTML = html; sel = -1; paint();
     showSugg(!!html);
   }

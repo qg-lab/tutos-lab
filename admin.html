@@ -11,13 +11,59 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3
 /* Logiciels proposés par défaut (les nouveaux s'ajoutent automatiquement) */
 const LOGICIELS = ["Photoshop", "Illustrator", "InDesign", "Figma"];
 /* Catégories (typologie) proposées par défaut — plusieurs possibles par tuto */
-const CATEGORIES = ["Web", "Print", "Motion", "Photo"];
+const CATEGORIES = ["Web", "Print", "Motion", "Photo", "3D"];
 /* Catégories proposées automatiquement d'après le titre */
 const CATS_AUTO = {
-  "Web":    ["web", "site", "ui", "ux", "landing", "responsive", "app", "interface"],
+  "Web":    ["web", "site", "ui ", "ux ", "landing", "responsive", "app ", "interface"],
   "Print":  ["print", "impression", "imprimer", "affiche", "poster", "flyer", "brochure", "cmjn", "cmyk", "edition", "magazine"],
   "Motion": ["motion", "animation", "animate", "after effects", "anime"],
   "Photo":  ["photo", "retouche", "portrait", "lightroom", "skin", "peau"],
+  "3D":     ["3d", "blender", "cinema 4d", "c4d", "spline", "modelisation", "modélisation", "render", "rendu"],
+};
+
+/* Approche du Lab 360 : les six étapes (plusieurs possibles par tuto).
+   Enregistrées dans la même colonne « categories » que les catégories :
+   le site les reconnaît à leur nom et les range dans le filtre Approche. */
+const APPROCHES = ["Observer", "Capter", "Produire", "Transformer", "Composer", "Déployer"];
+
+/* RÈGLES D'ANALYSE — à chaque lien collé, le titre (original + traduit), les tags
+   et le logiciel de la vidéo sont comparés à ces mots-clés. Chaque étape dont un
+   mot-clé apparaît (en début de mot, sans accents ni majuscules) est cochée
+   automatiquement. Un mot suivi d'une espace ("app ") doit apparaître en entier.
+   Tu peux toujours corriger à la main avant d'enregistrer.
+   Pour affiner : ajoute ou retire des mots dans les listes ci-dessous. */
+const APPS_AUTO = {
+  "Observer":    ["inspiration", "moodboard", "mood board", "reference", "référence", "analyse", "analyser", "observ",
+                  "veille", "recherche", "research", "decrypt", "décrypt", "breakdown", "case study", "etude de cas", "étude de cas",
+                  "histoire", "history", "culture", "pourquoi", "why"],
+  "Capter":      ["photo", "photograph", "scan", "scanner", "photogramm", "realityscan", "capture", "capturer", "film", "filmer",
+                  "video", "vidéo", "camera", "caméra", "objectif", "lens", "lumiere", "lumière", "light", "eclairage", "éclairage",
+                  "smartphone", "iphone", "enregistr", "record", "son ", "sound", "macro"],
+  "Produire":    ["dessin", "dessiner", "drawing", "draw", "sketch", "croquis", "peinture", "paint", "encre", "ink", "crayon",
+                  "pencil", "brush", "pinceau", "tampon", "stamp", "gravure", "linogravure", "risograph", "riso", "serigraph",
+                  "sérigraph", "collage", "papier", "paper", "matiere", "matière", "texture", "objet", "maquette physique",
+                  "handmade", "fait main", "illustration", "illustrat", "lettering", "calligraph", "vector", "vecteur", "pen tool", "plume"],
+  "Transformer": ["effet", "effect", "fx ", "filtre", "filter", "glitch", "distor", "deform", "déform", "warp", "displace",
+                  "halftone", "trame", "ascii", "dither", "pixel", "duotone", "bichromie", "vectoris", "vectorize", "trace",
+                  "image trace", "vectorisation", "detour", "détour", "cutout", "remove background", "retouche", "retouch",
+                  "photomontage", "montage", "manipulation", "blend", "fusion", "generati", "générer", "génère", "ia ", "ai ",
+                  "firefly", "midjourney", "convert", "transform"],
+  "Composer":    ["mise en page", "layout", "grille", "grid", "composition", "compos", "typo", "font", "police", "titrage",
+                  "logo", "identite", "identité", "branding", "brand", "charte", "palette", "couleur", "color", "colour",
+                  "affiche", "poster", "flyer", "couverture", "cover", "editorial", "éditorial", "magazine", "hierarchie",
+                  "hiérarchie", "alignement", "align", "systeme", "système", "pattern", "motif"],
+  "Déployer":    ["mockup", "mock up", "maquette", "export", "impression", "print", "imprim", "cmjn", "cmyk", "pdf",
+                  "web", "site", "ui ", "ux ", "app ", "interface", "responsive", "prototype", "animation", "animat",
+                  "motion", "after effects", "reseaux sociaux", "réseaux sociaux", "social", "instagram", "story",
+                  "template", "gabarit", "declinaison", "déclinaison", "signaletique", "signalétique", "packaging", "merch"],
+};
+
+/* Le logiciel aide aussi : il ajoute un indice à l'analyse */
+const APPROCHE_PAR_LOGICIEL = {
+  "lightroom": "Capter", "realityscan": "Capter",
+  "procreate": "Produire", "fresco": "Produire",
+  "after effects": "Déployer", "figma": "Déployer",
+  "indesign": "Composer",
 };
 
 /* Tags proposés automatiquement d'après le titre de la vidéo.
@@ -211,6 +257,10 @@ const TAGS_AUTO = {
         <label class="up">Catégories <span style="text-transform:none;color:#555">(plusieurs possibles)</span></label>
         <div class="labels" id="cats"></div>
       </div>
+      <div class="field">
+        <label class="up">Approche <span style="text-transform:none;color:#555">(plusieurs possibles — proposée automatiquement)</span></label>
+        <div class="labels" id="apps"></div>
+      </div>
       <div class="actions">
         <button class="btn" type="button" id="save">Ajouter</button>
         <button class="ghost" type="button" id="cancel" hidden>Annuler</button>
@@ -328,10 +378,13 @@ window.ytCover = function (img, failed) {
   let logicielChoisi = false;   // true si tu as cliqué toi-même sur un logiciel
   let cats = new Set();         // catégories cochées
   let catsChoisies = false;
+  let apps = new Set();         // étapes de l'approche cochées
+  let appsChoisies = false;
+  const estApproche = c => APPROCHES.some(a => norm(a) === norm(c));
 
   function allCats() {
     const m = new Map(CATEGORIES.map(c => [norm(c), c]));
-    tutos.forEach(t => (t.categories || []).forEach(c => { if (!m.has(norm(c))) m.set(norm(c), c); }));
+    tutos.forEach(t => (t.categories || []).forEach(c => { if (!estApproche(c) && !m.has(norm(c))) m.set(norm(c), c); }));
     cats.forEach(c => { if (!m.has(norm(c))) m.set(norm(c), c); });
     return [...m.values()];
   }
@@ -340,6 +393,16 @@ window.ytCover = function (img, failed) {
     $("cats").innerHTML = allCats().map(c => `<button type="button" class="lab${on.has(norm(c)) ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("") +
       `<button type="button" class="lab new" id="newCat">+ Autre</button><input id="newCatInput" placeholder="Nom de la catégorie" hidden>`;
   }
+  function renderApps() {
+    const on = new Set([...apps].map(norm));
+    $("apps").innerHTML = APPROCHES.map((c, i) => `<button type="button" class="lab${on.has(norm(c)) ? " on" : ""}" data-c="${esc(c)}"><span style="opacity:.5;margin-right:6px">0${i + 1}</span>${esc(c)}</button>`).join("");
+  }
+  $("apps").addEventListener("click", e => {
+    const b = e.target.closest(".lab"); if (!b) return;
+    const c = b.dataset.c, ex = [...apps].find(x => norm(x) === norm(c));
+    ex ? apps.delete(ex) : apps.add(c);
+    appsChoisies = true; renderApps();
+  });
   $("cats").addEventListener("click", e => {
     const b = e.target.closest(".lab"); if (!b) return;
     if (b.id === "newCat") { b.hidden = true; const i = $("newCatInput"); i.hidden = false; i.focus(); return; }
@@ -348,7 +411,7 @@ window.ytCover = function (img, failed) {
     ex ? cats.delete(ex) : cats.add(c);
     catsChoisies = true; renderCats();
   });
-  const addNewCat = v => { v = v.trim(); if (v && ![...cats].some(x => norm(x) === norm(v))) cats.add(v); catsChoisies = true; renderCats(); };
+  const addNewCat = v => { v = v.trim(); if (v && !estApproche(v) && ![...cats].some(x => norm(x) === norm(v))) cats.add(v); catsChoisies = true; renderCats(); };
   $("cats").addEventListener("keydown", e => {
     if (e.target.id !== "newCatInput") return;
     if (e.key === "Enter") { e.preventDefault(); addNewCat(e.target.value); }
@@ -362,11 +425,19 @@ window.ytCover = function (img, failed) {
     allLogiciels().forEach(l => { h = h.split(norm(l)).join(" "); });
     return h.replace(/\s+/g, " ");
   }
+  // mot-clé terminé par une espace ("app ") = mot entier ; sinon = début de mot
+  const cle = m => " " + norm(m) + (m.endsWith(" ") ? " " : "");
+  const trouve = (regles, hay) => Object.entries(regles).filter(([, mots]) => mots.some(m => hay.includes(cle(m)))).map(([c]) => c);
   function suggestCats(titre, tags) {
     // le logiciel aide aussi : InDesign → Print, Figma → Web
-    const parLogiciel = { indesign: " print ", figma: " web " }[norm(logiciel)] || "";
-    const hay = sansLogiciels([titre, ...tags].join(" ")) + parLogiciel;
-    return Object.entries(CATS_AUTO).filter(([, mots]) => mots.some(m => hay.includes(" " + norm(m)))).map(([c]) => c);
+    const parLogiciel = { indesign: " print ", figma: " web ", blender: " 3d " }[norm(logiciel)] || "";
+    return trouve(CATS_AUTO, " " + sansLogiciels([titre, ...tags].join(" ")) + " " + parLogiciel);
+  }
+  function suggestApps(titre, tags) {
+    const found = trouve(APPS_AUTO, " " + sansLogiciels([titre, ...tags].join(" ")) + " ");
+    const parLog = APPROCHE_PAR_LOGICIEL[norm(logiciel)];
+    if (parLog && !found.includes(parLog)) found.push(parLog);
+    return APPROCHES.filter(c => found.includes(c));   // dans l'ordre du cycle
   }
 
   /* ---------- Connexion ---------- */
@@ -498,6 +569,10 @@ window.ytCover = function (img, failed) {
       suggestCats(titreTout, inf.tags || []).forEach(c => cats.add(c));
       renderCats();
     }
+    if (!appsChoisies && !apps.size && !editing) {
+      suggestApps(titreTout, inf.tags || []).forEach(c => apps.add(c));
+      renderApps();
+    }
     // Logiciel détecté dans le titre ou les tags
     const hay = norm([titreTout, ...hashtags].join(" "));
     const found = allLogiciels().find(l => hay.includes(norm(l)));
@@ -523,9 +598,9 @@ window.ytCover = function (img, failed) {
   $("fLien").addEventListener("input", checkLien);
 
   function resetForm() {
-    editing = null; lastInfos = ""; logicielChoisi = false; cats = new Set(); catsChoisies = false; ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).value = ""); $("lienHelp").textContent = "";
+    editing = null; lastInfos = ""; logicielChoisi = false; cats = new Set(); catsChoisies = false; apps = new Set(); appsChoisies = false; ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).value = ""); $("lienHelp").textContent = "";
     $("save").textContent = "Ajouter"; $("formTitle").textContent = "Ajouter un tuto"; $("cancel").hidden = true;
-    setPreview(null); renderSugg(); renderLabels(); renderCats(); renderList();
+    setPreview(null); renderSugg(); renderLabels(); renderCats(); renderApps(); renderList();
   }
   $("cancel").addEventListener("click", resetForm);
 
@@ -537,7 +612,7 @@ window.ytCover = function (img, failed) {
     // un tag déjà connu garde l'orthographe enregistrée (ex. « 3d » → « 3D »)
     const known = new Map(allTags().map(x => [norm(x.label), x.label]));
     const tags = [...new Map(currentTags().map(tg => [norm(tg), known.get(norm(tg)) || tg])).values()];
-    const tuto = { lien: $("fLien").value.trim(), titre: $("fTitre").value.trim(), auteur: $("fAuteur").value.trim(), tags, logiciel, categories: [...cats] };
+    const tuto = { lien: $("fLien").value.trim(), titre: $("fTitre").value.trim(), auteur: $("fAuteur").value.trim(), tags, logiciel, categories: [...cats, ...apps] };
     $("save").disabled = true;
     try {
       const d = editing ? await api("update", { id: editing, tuto }) : await api("create", { tuto });
@@ -578,7 +653,8 @@ window.ytCover = function (img, failed) {
       $("fLien").value = t.lien; $("fTitre").value = t.titre; $("fAuteur").value = t.auteur || ""; $("fTags").value = t.tags.join(", ");
       lastInfos = (parseUrl(t.lien) || {}).id || "";
       logiciel = t.logiciel || LOGICIELS[0];
-      cats = new Set(t.categories || []); catsChoisies = true; renderCats();
+      cats = new Set((t.categories || []).filter(c => !estApproche(c))); catsChoisies = true; renderCats();
+      apps = new Set((t.categories || []).filter(estApproche)); appsChoisies = true; renderApps();
       $("save").textContent = "Enregistrer"; $("formTitle").textContent = "Modifier le tuto"; $("cancel").hidden = false;
       checkLien(); renderLabels(); renderSugg(); renderList();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -592,7 +668,7 @@ window.ytCover = function (img, failed) {
     }
   });
 
-  function render() { renderLabels(); renderCats(); renderSugg(); renderList(); renderAcces(); }
+  function render() { renderLabels(); renderCats(); renderApps(); renderSugg(); renderList(); renderAcces(); }
 
   async function saveCle() {
     const cle = $("cleEtu").value.trim();
