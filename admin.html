@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Back office — Tutos</title>
+<script>
+/* URL de l'Apps Script (…/exec). Vide = mode démo (rien n'est enregistré). */
+const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3G-pxoYHjXIJ9eDqaGyyETLCxeJTjLWtz5Z6x2y0Jusjx/exec";
+/* Logiciels proposés par défaut (les nouveaux s'ajoutent automatiquement) */
+const LOGICIELS = ["Photoshop", "Illustrator", "InDesign", "Figma"];
+/* Catégories (typologie) proposées par défaut — plusieurs possibles par tuto */
+const CATEGORIES = ["Web", "Print", "Motion", "Photo"];
+/* Catégories proposées automatiquement d'après le titre */
+const CATS_AUTO = {
+  "Web":    ["web", "site", "ui", "ux", "landing", "responsive", "app", "interface"],
+  "Print":  ["print", "impression", "imprimer", "affiche", "poster", "flyer", "brochure", "cmjn", "cmyk", "edition", "magazine"],
+  "Motion": ["motion", "animation", "animate", "after effects", "anime"],
+  "Photo":  ["photo", "retouche", "portrait", "lightroom", "skin", "peau"],
+};
+
+/* Tags proposés automatiquement d'après le titre de la vidéo.
+   Format :  "tag" : ["mot du titre", "autre mot", ...]   (sans accents ni majuscules nécessaires) */
+const TAGS_AUTO = {
+  "détourage":   ["detour", "detourer", "cutout", "cut out", "remove background", "supprimer l'arriere-plan", "fond"],
+  "retouche":    ["retouche", "retoucher", "retouch", "skin", "peau", "portrait"],
+  "effets":      ["effet", "effect", "fx"],
+  "typo":        ["typo", "texte", "text", "font", "police", "lettering"],
+  "3D":          ["3d"],
+  "vectoriel":   ["vector", "vectoriel", "pen tool", "plume", "bezier", "pathfinder"],
+  "sélection":   ["selection", "select", "lasso"],
+  "masques":     ["masque", "mask"],
+  "calques":     ["calque", "layer"],
+  "couleurs":    ["couleur", "color", "colour", "degrade", "gradient", "palette"],
+  "lumière":     ["lumiere", "light", "ombre", "shadow", "glow"],
+  "mise en page":["mise en page", "layout", "grille", "grid", "maquette"],
+  "prototype":   ["prototype", "prototyping", "interaction"],
+  "composants":  ["component", "composant", "variant"],
+  "auto layout": ["auto layout", "autolayout"],
+  "animation":   ["animation", "animate", "anime", "motion"],
+  "IA":          ["firefly", "generative", "generatif", "generative fill", " ia ", " ai "],
+  "raccourcis":  ["raccourci", "shortcut", "astuce", "tip", "trick", "hack"],
+  "logo":        ["logo"],
+  "motifs":      ["motif", "pattern"],
+  "mockup":      ["mockup", "mock-up"],
+  "photo":       ["photo"],
+  "bitmap":      ["bitmap", "pixel", "raster", "pixel art"],
+  "chrome":      ["chrome", "metal", "metallic", "liquid metal"],
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#000;--fg:#fff;--muted:#8a8a8a;--line:#262626;--red:#E63A24;--pad:20px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);font-family:"Geist",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+  button,input{font:inherit;color:inherit}
+  .up{font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+
+  header{display:flex;justify-content:space-between;align-items:flex-start;padding:var(--pad);gap:20px}
+  .brand{display:flex;gap:10px;align-items:flex-start}
+  .brand p{font-size:12px;line-height:14px;text-transform:uppercase}
+  .hlinks{display:flex;gap:28px;padding-top:12px}
+  .hlinks a,.hlinks button{background:none;border:0;color:#8a8a8a;text-decoration:none;cursor:pointer;text-transform:inherit;letter-spacing:inherit;font-size:inherit}
+  .hlinks a:hover,.hlinks button:hover{color:var(--fg)}
+
+  main{max-width:1100px;padding:40px var(--pad) 120px}
+  h1{font-weight:400;font-size:28px;margin-bottom:28px}
+  .demo{border:1px dashed #444;color:#aaa;font-size:12px;padding:10px 14px;margin-bottom:28px}
+
+  /* Formulaire */
+  .form{display:grid;grid-template-columns:1fr 160px;gap:28px;border-top:1px solid var(--line);padding-top:24px}
+  .fields{display:flex;flex-direction:column;gap:22px;min-width:0}
+  .field label{display:block;color:var(--muted);margin-bottom:8px}
+  .field input{width:100%;background:none;border:0;border-bottom:1px solid #333;padding:8px 0;font-size:18px;outline:none;transition:border-color .2s}
+  .field input:focus{border-color:#fff}
+  .field input::placeholder{color:#444}
+  .field .help{font-size:12px;color:#666;margin-top:7px;min-height:15px}
+  .field .help.ok{color:#7fd17f}
+  .field .help.err{color:var(--red)}
+  .labels{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .lab{background:none;border:1px solid #333;border-radius:999px;padding:7px 13px;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:#bbb;transition:all .15s}
+  .lab:hover{border-color:#666;color:#fff}
+  .lab.on{background:var(--red);border-color:var(--red);color:#fff}
+  .lab.new{border-style:dashed}
+  .labels input{background:none;border:0;border-bottom:1px solid #333;padding:6px 0;font-size:13px;outline:none;width:150px}
+  .sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .sugg button{background:none;border:0;color:#666;font-size:12px;cursor:pointer;padding:0}
+  .sugg button:hover{color:#fff}
+  .actions{display:flex;gap:16px;align-items:center}
+  .btn{background:var(--red);border:0;color:#fff;padding:11px 20px;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .btn:disabled{opacity:.4;cursor:default}
+  .ghost{background:none;border:0;color:#8a8a8a;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .ghost:hover{color:#fff}
+  .preview{aspect-ratio:9/16;background:#111;border:1px solid #1e1e1e;position:relative;overflow:hidden;align-self:start}
+  .preview iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .preview img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .preview .cap{position:absolute;left:0;right:0;bottom:0;padding:30px 8px 8px;font-size:11px;line-height:1.3;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff}
+  .field input.fetched{animation:flash 1.2s}
+  @keyframes flash{0%{border-color:var(--red)}100%{border-color:#333}}
+  .preview span{position:absolute;inset:0;display:grid;place-items:center;color:#444;font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:10px}
+
+  /* Liste */
+  .list{margin-top:72px}
+  .list h2{font-weight:400;font-size:22px;margin:40px 0 12px;display:flex;gap:10px;align-items:baseline}
+  .list h2 small{font-size:12px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:70px 1fr auto;gap:16px;align-items:center;border-top:1px solid #1a1a1a;padding:12px 0}
+  .row.editing{background:#111}
+  .plat{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#777}
+  .row .t{font-size:15px}
+  .row .t.none{color:#555;font-style:italic}
+  .row .tg{font-size:12px;color:var(--muted);margin-top:3px}
+  .row .lk{font-size:11px;color:#555;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .lk a{color:inherit}
+  .row .ra{display:flex;gap:18px}
+  .row .ra button{background:none;border:0;color:#8a8a8a;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .row .ra button:hover{color:#fff}
+  .row .ra .del:hover,.row .ra .yes{color:var(--red)}
+  .empty{color:#555;font-size:14px;padding:20px 0}
+
+  /* Connexion */
+  .login{min-height:70vh;display:grid;place-items:center}
+  .login form{width:min(360px,90vw);display:flex;flex-direction:column;gap:18px}
+  .login input{background:none;border:0;border-bottom:1px solid #333;padding:10px 0;font-size:18px;outline:none}
+  .login input:focus{border-color:#fff}
+  .login .err{color:var(--red);font-size:13px;min-height:16px}
+
+  .acces{border:1px solid #262626;padding:16px 18px;margin-bottom:44px;display:flex;flex-direction:column;gap:10px}
+  .acces .etat{font-size:14px;color:#ddd}
+  .acces .etat b{font-weight:500}
+  .acces .etat .ko{color:var(--red)}
+  .acces .row2{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .acces input{flex:1;min-width:200px;background:none;border:0;border-bottom:1px solid #333;padding:8px 0;font-size:15px;outline:none}
+  .acces input:focus{border-color:#fff}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:#fff;color:#000;padding:10px 16px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.err{background:var(--red);color:#fff}
+  [hidden]{display:none!important}
+
+  @media (max-width:700px){
+    .form{grid-template-columns:1fr}
+    .preview{width:160px}
+    .row{grid-template-columns:1fr}
+    .hlinks{gap:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <p>Back office<br>Préparatoire appliquée<br>Outils numériques</p>
+  </div>
+  <div class="hlinks up">
+    <a href="index.html" target="_blank" rel="noopener">Voir le site ↗</a>
+    <button type="button" id="logout" hidden>Déconnexion</button>
+  </div>
+</header>
+
+<!-- Connexion -->
+<section class="login" id="loginView">
+  <form id="loginForm">
+    <h1>Back office</h1>
+    <input type="password" id="pwd" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button class="btn" type="button" id="loginBtn">Entrer</button>
+    <p class="err" id="loginErr"></p>
+  </form>
+</section>
+
+<!-- Back office -->
+<main id="app" hidden>
+  <p class="demo" id="demo" hidden>Mode démo : l'API n'est pas encore branchée, rien n'est enregistré.</p>
+  <section class="acces" id="acces">
+    <div class="up" style="color:#8a8a8a">Accès étudiants</div>
+    <p class="etat" id="accesEtat"></p>
+    <div class="row2">
+      <input type="text" id="cleEtu" placeholder="Nouveau mot de passe étudiant" autocomplete="off" spellcheck="false">
+      <button class="btn" type="button" id="cleBtn">Enregistrer</button>
+    </div>
+  </section>
+
+  <h1 id="formTitle">Ajouter un tuto</h1>
+
+  <form class="form" id="form" autocomplete="off">
+    <div class="fields">
+      <div class="field">
+        <label class="up" for="fLien">Lien</label>
+        <input id="fLien" placeholder="Colle le lien YouTube, TikTok ou Instagram" required>
+        <p class="help" id="lienHelp"></p>
+      </div>
+      <div class="field">
+        <label class="up" for="fTitre">Titre</label>
+        <input id="fTitre" placeholder="Ex. Détourage des cheveux">
+      </div>
+      <div class="field">
+        <label class="up" for="fAuteur">Auteur</label>
+        <input id="fAuteur" placeholder="Nom de la chaîne ou du créateur">
+      </div>
+      <div class="field">
+        <label class="up" for="fTags">Tags</label>
+        <input id="fTags" placeholder="Séparés par des virgules : effets, 3D, bitmap">
+        <div class="sugg" id="tagSugg"></div>
+      </div>
+      <div class="field">
+        <label class="up">Logiciel</label>
+        <div class="labels" id="labels"></div>
+      </div>
+      <div class="field">
+        <label class="up">Catégories <span style="text-transform:none;color:#555">(plusieurs possibles)</span></label>
+        <div class="labels" id="cats"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="save">Ajouter</button>
+        <button class="ghost" type="button" id="cancel" hidden>Annuler</button>
+      </div>
+    </div>
+    <div class="preview" id="preview"><span>Aperçu</span></div>
+  </form>
+
+  <div class="list" id="list"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const NAME = { tiktok: "TikTok", youtube: "YouTube", instagram: "Instagram" };
+
+  function parseUrl(url) {
+    const u = String(url).trim();
+    let m = u.match(/tiktok\.com\/.*\/(?:video|photo)\/(\d+)/i);
+    if (m) return { type: "tiktok", id: m[1] };
+    m = u.match(/(?:youtube\.com\/(?:shorts\/|watch\?(?:.*&)?v=|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+    if (m) return { type: "youtube", id: m[1] };
+    m = u.match(/instagram\.com\/(?:[\w.]+\/)?(reel|reels|p|tv)\/([\w-]+)/i);
+    if (m) return { type: "instagram", kind: m[1].toLowerCase() === "reels" ? "reel" : m[1].toLowerCase(), id: m[2] };
+    if (/vm\.tiktok\.com|vt\.tiktok\.com/i.test(u)) return { type: "short" };
+    return null;
+  }
+  function embedSrc(p) {
+    if (p.type === "youtube") return `https://www.youtube.com/embed/${p.id}?autoplay=1&mute=1&loop=1&playlist=${p.id}&playsinline=1&rel=0`;
+    if (p.type === "tiktok") return `https://www.tiktok.com/player/v1/${p.id}?autoplay=1&loop=1&music_info=0&description=0`;
+    if (p.type === "instagram") return `https://www.instagram.com/${p.kind}/${p.id}/embed/`;
+  }
+
+  /* ---------- API (ou démo) ---------- */
+  const DEMO = !API_URL.trim();
+  let demoData = [
+    { id: "d1", logiciel: "Photoshop", lien: "https://www.youtube.com/shorts/1CvcYGXdg0s", titre: "", tags: [], auteur: "" },
+  ];
+  let password = "";
+  try { password = sessionStorage.getItem("bo-pwd") || ""; } catch (e) {}
+
+  async function api(action, extra = {}) {
+    if (DEMO) {
+      await new Promise(r => setTimeout(r, 150));
+      if (action === "create") demoData.push({ id: "d" + Date.now(), ...extra.tuto });
+      if (action === "update") demoData = demoData.map(t => t.id === extra.id ? { id: t.id, ...extra.tuto } : t);
+      if (action === "delete") demoData = demoData.filter(t => t.id !== extra.id);
+      if (action === "infos") return { ok: true, infos: await demoInfos(extra.lien) };
+      if ((action === "create" || action === "update") && extra.tuto) extra.tuto.tags.forEach(tg => {
+        if (!demoTags.some(x => norm(x) === norm(tg))) demoTags.push(tg);
+      });
+      if (action === "motDePasseEtudiant") {
+        if (String(extra.cle || "").length < 4) return Promise.reject(new Error("Mot de passe étudiant : 4 caractères minimum"));
+        demoCle = extra.cle;
+      }
+      return { ok: true, tutos: JSON.parse(JSON.stringify(demoData)), tags: demoTags.slice(), accesEtudiants: !!demoCle };
+    }
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action, password, ...extra })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Erreur");
+    return data;
+  }
+
+  // En mode démo : titre + auteur via noembed (les tags nécessitent l'Apps Script)
+  async function demoInfos(lien) {
+    const p = parseUrl(lien); if (!p || p.type !== "youtube") return {};
+    const out = { id: p.id, cover: `https://i.ytimg.com/vi/${p.id}/hqdefault.jpg`, titre: "", auteur: "", tags: [] };
+    try {
+      const o = await (await fetch("https://noembed.com/embed?url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + p.id))).json();
+      out.titre = (o.title || "").replace(/#[\p{L}\p{N}_]+/gu, "").replace(/\s{2,}/g, " ").trim();
+      out.auteur = o.author_name || "";
+      out.tags = ((o.title || "").match(/#[\p{L}\p{N}_]+/gu) || []).map(s => s.slice(1)).filter(s => !/^shorts?$/i.test(s));
+    } catch (e) {}
+    return out;
+  }
+
+  let tutos = [];
+  let dbTags = [];                 // liste des tags enregistrée dans la base (onglet « Tags »)
+  let demoTags = ["3D", "web", "print", "bitmap", "chrome"];
+  let accesEtudiants = false;
+  function setData(d) {
+    tutos = d.tutos || []; if (d.tags) dbTags = d.tags;
+    if (typeof d.accesEtudiants === "boolean") { accesEtudiants = d.accesEtudiants; renderAcces(); }
+  }
+  function renderAcces() {
+    $("accesEtat").innerHTML = accesEtudiants
+      ? `<b>Site ouvert</b> — les étudiants entrent avec le mot de passe étudiant. Pour le changer, tape-en un nouveau : l'ancien ne marchera plus.`
+      : `<b class="ko">Site fermé</b> — choisis un mot de passe étudiant pour ouvrir l'accès aux tutos.`;
+    $("cleBtn").textContent = accesEtudiants ? "Changer" : "Ouvrir le site";
+  }
+  let demoCle = "";
+  let editing = null;
+  let logiciel = LOGICIELS[0];
+  let logicielChoisi = false;   // true si tu as cliqué toi-même sur un logiciel
+  let cats = new Set();         // catégories cochées
+  let catsChoisies = false;
+
+  function allCats() {
+    const m = new Map(CATEGORIES.map(c => [norm(c), c]));
+    tutos.forEach(t => (t.categories || []).forEach(c => { if (!m.has(norm(c))) m.set(norm(c), c); }));
+    cats.forEach(c => { if (!m.has(norm(c))) m.set(norm(c), c); });
+    return [...m.values()];
+  }
+  function renderCats() {
+    const on = new Set([...cats].map(norm));
+    $("cats").innerHTML = allCats().map(c => `<button type="button" class="lab${on.has(norm(c)) ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("") +
+      `<button type="button" class="lab new" id="newCat">+ Autre</button><input id="newCatInput" placeholder="Nom de la catégorie" hidden>`;
+  }
+  $("cats").addEventListener("click", e => {
+    const b = e.target.closest(".lab"); if (!b) return;
+    if (b.id === "newCat") { b.hidden = true; const i = $("newCatInput"); i.hidden = false; i.focus(); return; }
+    const c = b.dataset.c, k = norm(c);
+    const ex = [...cats].find(x => norm(x) === k);
+    ex ? cats.delete(ex) : cats.add(c);
+    catsChoisies = true; renderCats();
+  });
+  const addNewCat = v => { v = v.trim(); if (v && ![...cats].some(x => norm(x) === norm(v))) cats.add(v); catsChoisies = true; renderCats(); };
+  $("cats").addEventListener("keydown", e => {
+    if (e.target.id !== "newCatInput") return;
+    if (e.key === "Enter") { e.preventDefault(); addNewCat(e.target.value); }
+    if (e.key === "Escape") renderCats();
+  });
+  $("cats").addEventListener("focusout", e => { if (e.target.id === "newCatInput") setTimeout(() => addNewCat(e.target.value), 100); });
+
+  // texte normalisé, sans les noms de logiciels (sinon « Photoshop » déclencherait « photo »)
+  function sansLogiciels(s) {
+    let h = " " + norm(s).replace(/[^a-z0-9'\- ]+/g, " ") + " ";
+    allLogiciels().forEach(l => { h = h.split(norm(l)).join(" "); });
+    return h.replace(/\s+/g, " ");
+  }
+  function suggestCats(titre, tags) {
+    // le logiciel aide aussi : InDesign → Print, Figma → Web
+    const parLogiciel = { indesign: " print ", figma: " web " }[norm(logiciel)] || "";
+    const hay = sansLogiciels([titre, ...tags].join(" ")) + parLogiciel;
+    return Object.entries(CATS_AUTO).filter(([, mots]) => mots.some(m => hay.includes(norm(m)))).map(([c]) => c);
+  }
+
+  /* ---------- Connexion ---------- */
+  async function login(pwd) {
+    password = pwd;
+    try {
+      const d = await api("login");
+      try { sessionStorage.setItem("bo-pwd", pwd); } catch (e) {}
+      setData(d);
+      $("loginView").hidden = true; $("app").hidden = false; $("logout").hidden = false;
+      $("demo").hidden = !DEMO;
+      render(); $("fLien").focus();
+    } catch (e) {
+      password = "";
+      try { sessionStorage.removeItem("bo-pwd"); } catch (er) {}
+      $("loginErr").textContent = e.message === "Failed to fetch" ? "Impossible de joindre l'API." : e.message;
+    }
+  }
+  function doLogin() {
+    $("loginErr").textContent = "";
+    if (!DEMO && !$("pwd").value) { $("loginErr").textContent = "Entre le mot de passe."; return; }
+    login($("pwd").value);
+  }
+  $("loginForm").addEventListener("submit", e => e.preventDefault());
+  $("loginBtn").addEventListener("click", doLogin);
+  $("pwd").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doLogin(); } });
+  $("logout").addEventListener("click", () => { try { sessionStorage.removeItem("bo-pwd"); } catch (e) {} location.reload(); });
+  if (DEMO) { $("pwd").placeholder = "Mode démo : tape n'importe quoi"; }
+  if (password) login(password);
+
+  /* ---------- Formulaire ---------- */
+  function allLogiciels() {
+    const set = new Map(LOGICIELS.map(l => [norm(l), l]));
+    tutos.forEach(t => t.logiciel && !set.has(norm(t.logiciel)) && set.set(norm(t.logiciel), t.logiciel));
+    return [...set.values()];
+  }
+  function allTags() {
+    const m = new Map();
+    dbTags.forEach(tg => { const k = norm(tg); if (!m.has(k)) m.set(k, { label: tg, n: 0 }); });
+    tutos.forEach(t => t.tags.forEach(tg => { const k = norm(tg); if (!m.has(k)) m.set(k, { label: tg, n: 0 }); m.get(k).n++; }));
+    return [...m.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "fr"));
+  }
+  const currentTags = () => $("fTags").value.split(",").map(s => s.trim().replace(/^#/, "")).filter(Boolean);
+
+  function renderLabels() {
+    const box = $("labels");
+    box.innerHTML = allLogiciels().map(l =>
+      `<button type="button" class="lab${norm(l) === norm(logiciel) ? " on" : ""}" data-l="${esc(l)}">${esc(l)}</button>`).join("") +
+      `<button type="button" class="lab new" id="newLab">+ Autre</button>
+       <input id="newLabInput" placeholder="Nom du logiciel" hidden>`;
+    if (!allLogiciels().some(l => norm(l) === norm(logiciel)) && logiciel) {
+      box.querySelector("#newLab").insertAdjacentHTML("beforebegin", `<button type="button" class="lab on" data-l="${esc(logiciel)}">${esc(logiciel)}</button>`);
+    }
+  }
+  $("labels").addEventListener("click", e => {
+    const b = e.target.closest(".lab"); if (!b) return;
+    if (b.id === "newLab") {
+      b.hidden = true; const i = $("newLabInput"); i.hidden = false; i.focus();
+      return;
+    }
+    logiciel = b.dataset.l; logicielChoisi = true; renderLabels();
+  });
+  $("labels").addEventListener("keydown", e => {
+    if (e.target.id !== "newLabInput") return;
+    if (e.key === "Enter") { e.preventDefault(); const v = e.target.value.trim(); if (v) logiciel = v; renderLabels(); }
+    if (e.key === "Escape") renderLabels();
+  });
+  $("labels").addEventListener("focusout", e => {
+    if (e.target.id === "newLabInput") { const v = e.target.value.trim(); if (v) logiciel = v; setTimeout(renderLabels, 100); }
+  });
+
+  function renderSugg() {
+    const cur = new Set(currentTags().map(norm));
+    const list = allTags().filter(t => !cur.has(norm(t.label))).slice(0, 24);
+    $("tagSugg").innerHTML = list.map(t => `<button type="button" data-t="${esc(t.label)}">+ ${esc(t.label)}</button>`).join("");
+  }
+  $("tagSugg").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const tags = currentTags(); tags.push(b.dataset.t);
+    $("fTags").value = tags.join(", ") + ", "; renderSugg(); $("fTags").focus();
+  });
+  $("fTags").addEventListener("input", renderSugg);
+
+  let lastPreview = "", lastInfos = "", infosTimer;
+  function checkLien() {
+    const v = $("fLien").value.trim(), h = $("lienHelp"), p = parseUrl(v);
+    if (!v) { h.textContent = ""; h.className = "help"; setPreview(null); return false; }
+    if (!p) { h.textContent = "Lien non reconnu (YouTube, TikTok ou Instagram)"; h.className = "help err"; setPreview(null); return false; }
+    if (p.type === "short") { h.textContent = "Lien court TikTok : ouvre-le et copie le lien complet"; h.className = "help err"; setPreview(null); return false; }
+    const dup = tutos.find(t => t.id !== editing && (parseUrl(t.lien) || {}).id === p.id);
+    h.textContent = NAME[p.type] + " ✓" + (dup ? " — déjà présent" + (dup.titre ? " (« " + dup.titre + " »)" : "") : "");
+    h.className = "help " + (dup ? "err" : "ok");
+    setPreview(p);
+    if (p.type === "youtube" && p.id !== lastInfos) {
+      lastInfos = p.id;
+      clearTimeout(infosTimer); infosTimer = setTimeout(() => fetchInfos(v, p.id), 250);
+    }
+    return true;
+  }
+
+  // Tags : hashtags du titre + mots-clés reconnus (TAGS_AUTO) + tags déjà utilisés présents dans le titre
+  function suggestTags(titre, hashtags) {
+    const hay = sansLogiciels(titre);
+    const out = [];
+    const add = s => { if (s && !out.some(x => norm(x) === norm(s))) out.push(s); };
+    hashtags.forEach(h => { const k = Object.keys(TAGS_AUTO).find(tag => norm(tag) === norm(h)); add(k || h); });
+    Object.entries(TAGS_AUTO).forEach(([tag, mots]) => { if (mots.some(m => hay.includes(norm(m)))) add(tag); });
+    allTags().forEach(t => { if (norm(t.label).length > 2 && hay.includes(" " + norm(t.label) + " ")) add(t.label); });
+    return out.filter(s => !allLogiciels().some(l => norm(l) === norm(s))).slice(0, 6);
+  }
+
+  async function fetchInfos(lien, id) {
+    const h = $("lienHelp");
+    h.textContent = "YouTube ✓ — récupération du titre, de l'auteur et des tags…"; h.className = "help ok";
+    let inf = {};
+    try { inf = (await api("infos", { lien })).infos || {}; } catch (e) {}
+    const hashtags = (inf.tags || []).slice();
+    if (lastInfos !== id) return;               // un autre lien a été collé entre-temps
+    const fill = (fid, val) => { const el = $(fid); if (val && !el.value.trim()) { el.value = val; el.classList.remove("fetched"); void el.offsetWidth; el.classList.add("fetched"); } };
+    fill("fTitre", inf.titre);
+    fill("fAuteur", inf.auteur);
+    if (!$("fTags").value.trim()) {
+      const tags = suggestTags(inf.titre || "", inf.tags || []);
+      if (tags.length) { inf.tags = tags; fill("fTags", tags.join(", ")); }
+    }
+    if (!catsChoisies && !cats.size && !editing) {
+      suggestCats(inf.titre || "", inf.tags || []).forEach(c => cats.add(c));
+      renderCats();
+    }
+    // Logiciel détecté dans le titre ou les tags
+    const hay = norm([inf.titre, ...hashtags].join(" "));
+    const found = allLogiciels().find(l => hay.includes(norm(l)));
+    if (found && !editing && !logicielChoisi) { logiciel = found; renderLabels(); }
+    renderSugg(); setPreview(parseUrl(lien), inf.titre);
+    const got = [inf.titre && "titre", inf.auteur && "auteur", inf.tags && inf.tags.length && "tags"].filter(Boolean);
+    h.textContent = "YouTube ✓" + (got.length ? " — " + got.join(", ") + " récupérés"
+      : DEMO ? " — récupération auto active une fois le back office branché et en ligne"
+      : " — infos non disponibles, remplis à la main");
+  }
+  function setPreview(p, caption) {
+    const key = p ? p.type + p.id + (caption || "") : "";
+    if (key === lastPreview) return; lastPreview = key;
+    if (!p) { $("preview").innerHTML = `<span>Aperçu</span>`; return; }
+    if (p.type === "youtube") {
+      $("preview").innerHTML = `<span>Cover</span><img alt="" src="https://i.ytimg.com/vi/${p.id}/oar2.jpg"
+        onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${p.id}/hqdefault.jpg'}else{this.remove()}">` +
+        (caption ? `<div class="cap">${esc(caption)}</div>` : "");
+      return;
+    }
+    $("preview").innerHTML = `<span>${NAME[p.type]}<br><br>Pas de cover :<br>carte texte avec le titre</span>`;
+  }
+  $("fLien").addEventListener("input", checkLien);
+
+  function resetForm() {
+    editing = null; lastInfos = ""; logicielChoisi = false; cats = new Set(); catsChoisies = false; ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).value = ""); $("lienHelp").textContent = "";
+    $("save").textContent = "Ajouter"; $("formTitle").textContent = "Ajouter un tuto"; $("cancel").hidden = true;
+    setPreview(null); renderSugg(); renderLabels(); renderCats(); renderList();
+  }
+  $("cancel").addEventListener("click", resetForm);
+
+  $("form").addEventListener("submit", e => e.preventDefault());
+  $("save").addEventListener("click", save);
+  ["fLien", "fTitre", "fAuteur", "fTags"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); save(); } }));
+  async function save() {
+    if (!checkLien()) { $("fLien").focus(); return; }
+    // un tag déjà connu garde l'orthographe enregistrée (ex. « 3d » → « 3D »)
+    const known = new Map(allTags().map(x => [norm(x.label), x.label]));
+    const tags = [...new Map(currentTags().map(tg => [norm(tg), known.get(norm(tg)) || tg])).values()];
+    const tuto = { lien: $("fLien").value.trim(), titre: $("fTitre").value.trim(), auteur: $("fAuteur").value.trim(), tags, logiciel, categories: [...cats] };
+    $("save").disabled = true;
+    try {
+      const d = editing ? await api("update", { id: editing, tuto }) : await api("create", { tuto });
+      setData(d);
+      toast(editing ? "Modifié" : "Ajouté");
+      resetForm(); $("fLien").focus();
+    } catch (err) { toast(err.message, true); }
+    $("save").disabled = false;
+  }
+
+  /* ---------- Liste ---------- */
+  function renderList() {
+    const groups = allLogiciels().map(l => [l, tutos.filter(t => norm(t.logiciel) === norm(l))]).filter(g => g[1].length);
+    const orphan = tutos.filter(t => !t.logiciel);
+    if (orphan.length) groups.push(["Sans logiciel", orphan]);
+    $("list").innerHTML = `<h1>Tutos en ligne <small class="up" style="color:#8a8a8a;font-size:12px">${tutos.length}</small></h1>` +
+      (groups.length ? "" : `<p class="empty">Aucun tuto pour l'instant.</p>`) +
+      groups.map(([l, list]) => `<h2>${esc(l)}<small>${list.length}</small></h2>` + list.slice().reverse().map(t => {
+        const p = parseUrl(t.lien) || {};
+        return `<div class="row${editing === t.id ? " editing" : ""}" data-id="${esc(t.id)}">
+          <span class="plat">${NAME[p.type] || "?"}</span>
+          <div style="min-width:0">
+            <div class="t${t.titre ? "" : " none"}">${t.titre ? esc(t.titre) : "Sans titre"}</div>
+            ${t.auteur ? `<div class="tg">par ${esc(t.auteur)}</div>` : ""}
+            ${(t.categories || []).length ? `<div class="tg" style="color:#bbb">${t.categories.map(esc).join(" · ")}</div>` : ""}
+            ${t.tags.length ? `<div class="tg">${t.tags.map(x => "#" + esc(x)).join(" ")}</div>` : ""}
+            <div class="lk"><a href="${esc(t.lien)}" target="_blank" rel="noopener">${esc(t.lien)}</a></div>
+          </div>
+          <div class="ra"><button type="button" class="edit">Modifier</button><button type="button" class="del">Supprimer</button></div>
+        </div>`;
+      }).join("")).join("");
+  }
+  $("list").addEventListener("click", async e => {
+    const row = e.target.closest(".row"); if (!row) return;
+    const id = row.dataset.id, t = tutos.find(x => x.id === id);
+    if (e.target.classList.contains("edit")) {
+      editing = id;
+      $("fLien").value = t.lien; $("fTitre").value = t.titre; $("fAuteur").value = t.auteur || ""; $("fTags").value = t.tags.join(", ");
+      lastInfos = (parseUrl(t.lien) || {}).id || "";
+      logiciel = t.logiciel || LOGICIELS[0];
+      cats = new Set(t.categories || []); catsChoisies = true; renderCats();
+      $("save").textContent = "Enregistrer"; $("formTitle").textContent = "Modifier le tuto"; $("cancel").hidden = false;
+      checkLien(); renderLabels(); renderSugg(); renderList();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (e.target.classList.contains("del")) {
+      e.target.closest(".ra").innerHTML = `<span style="font-size:12px;color:#8a8a8a">Supprimer ?</span><button type="button" class="yes">Oui</button><button type="button" class="no">Non</button>`;
+    } else if (e.target.classList.contains("no")) {
+      renderList();
+    } else if (e.target.classList.contains("yes")) {
+      try { setData(await api("delete", { id })); if (editing === id) resetForm(); else renderList(); toast("Supprimé"); }
+      catch (err) { toast(err.message, true); }
+    }
+  });
+
+  function render() { renderLabels(); renderCats(); renderSugg(); renderList(); renderAcces(); }
+
+  async function saveCle() {
+    const cle = $("cleEtu").value.trim();
+    if (cle.length < 4) { toast("4 caractères minimum", true); return; }
+    $("cleBtn").disabled = true;
+    try {
+      setData(await api("motDePasseEtudiant", { cle }));
+      $("cleEtu").value = "";
+      toast(accesEtudiants ? "Mot de passe étudiant enregistré" : "Enregistré");
+    } catch (err) { toast(err.message, true); }
+    $("cleBtn").disabled = false;
+  }
+  $("cleBtn").addEventListener("click", saveCle);
+  $("cleEtu").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); saveCle(); } });
+
+  let tt;
+  function toast(msg, err) {
+    const el = $("toast"); el.textContent = msg; el.className = "toast show" + (err ? " err" : "");
+    clearTimeout(tt); tt = setTimeout(() => el.className = "toast", 2200);
+  }
+})();
+</script>
+</body>
+</html>

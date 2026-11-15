@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outils numériques — Tutos</title>
+<script>
+/* =====================================================================
+   BACK OFFICE
+   Colle ici l'URL de ton Apps Script (…/exec), la même que dans admin.html.
+   Les tutos ajoutés dans le back office apparaissent alors ici, après saisie
+   du mot de passe étudiant (défini dans le back office, « Accès étudiants »).
+   Laisse vide ("") pour utiliser la liste TUTOS plus bas à la place.
+   ===================================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbxe2YwXcYVvspFErBB550p3G-pxoYHjXIJ9eDqaGyyETLCxeJTjLWtz5Z6x2y0Jusjx/exec";
+
+/* =====================================================================
+   LISTE DES TUTOS (utilisée seulement si API_URL est vide)
+   Chaque tuto s'écrit comme ceci (titre et tags facultatifs) :
+     { url: "https://www.youtube.com/shorts/xxxxxxxxxxx", titre: "Détourage rapide", categories: ["Photo"], tags: ["détourage", "sélection"] },
+   Un lien seul entre guillemets fonctionne aussi :
+     "https://www.youtube.com/shorts/xxxxxxxxxxx",
+   Les tags apparaissent automatiquement dans la barre de filtres.
+   Formats de liens acceptés :
+     https://www.youtube.com/shorts/1CvcYGXdg0s
+     https://youtu.be/1CvcYGXdg0s
+     https://www.tiktok.com/@compte/video/7312345678901234567
+     https://www.instagram.com/reel/ABC123xyz/
+     https://www.instagram.com/p/ABC123xyz/
+   (Les liens courts vm.tiktok.com ne marchent pas : ouvre-les une fois
+    dans le navigateur et copie le lien complet.)
+   ===================================================================== */
+const TUTOS = {
+  photoshop: [
+    { url: "https://www.youtube.com/shorts/1CvcYGXdg0s", titre: "", tags: [] },
+    { url: "https://www.youtube.com/shorts/-bBojbopp8k", titre: "", categories: [], tags: [] },
+  ],
+  illustrator: [
+  ],
+  indesign: [
+  ],
+  figma: [
+  ],
+};
+
+const CATEGORIES = [
+  { id: "photoshop",   label: "Photoshop",   abbr: "Ps" },
+  { id: "illustrator", label: "Illustrator", abbr: "Ai" },
+  { id: "indesign",    label: "InDesign",    abbr: "Id" },
+  { id: "figma",       label: "Figma",       abbr: "Fg" },
+];
+
+/* =====================================================================
+   BOÎTE À OUTILS (bouton à droite de la recherche)
+   Une rubrique = un titre + une liste de liens.
+   "info" = descriptif ; pour les fonderies, "cout" = Gratuit / Essai gratuit / Payant.
+   Un lien vide ("") s'affiche sans lien, en attendant l'adresse.
+   ===================================================================== */
+const BOITE = [
+  { emoji: "💡", rubrique: "Inspirations", items: [
+    { nom: "Are.na",             info: "Collection de références créatives",   lien: "https://www.are.na/" },
+    { nom: "Brand New",          info: "Logos et rebrandings",                 lien: "https://www.underconsideration.com/brandnew/" },
+    { nom: "Rebrand",            info: "Inspiration rebranding",               lien: "https://www.rebrand.gallery/" },
+    { nom: "The Brand Identity", info: "Inspiration branding",                 lien: "https://the-brandidentity.com/" },
+    { nom: "Logobook",           info: "Base de logos et symboles",            lien: "https://logobook.com/" },
+    { nom: "LogoArchive",        info: "Archives de logos",                    lien: "https://www.logo-archive.org/" },
+    { nom: "Logo Histories",     info: "Histoire des logos",                   lien: "https://www.logohistories.com/" },
+    { nom: "Fonts In Use",       info: "Inspiration typographique",            lien: "https://fontsinuse.com/" },
+    { nom: "Deck.Gallery®",      info: "Inspiration de présentations",         lien: "https://deck.gallery/" },
+    { nom: "Gallica",            info: "Archives et patrimoine visuel",        lien: "https://gallica.bnf.fr/" },
+    { nom: "Awwwards",           info: "Inspiration web design",               lien: "https://www.awwwards.com/" },
+    { nom: "Godly",              info: "Inspiration web design",               lien: "https://godly.website/" },
+    { nom: "Internet Gem",       info: "Sélection de sites créatifs",          lien: "https://ilovecreatives.com/internet-gem-websites" },
+    { nom: "Interface In Game",  info: "Inspiration UI de jeux vidéo",         lien: "https://interfaceingame.com/" },
+    { nom: "Creattie",           info: "Illustrations et animations",          lien: "https://creattie.com/" },
+    { nom: "Design Spells",      info: "Micro-interactions et animations",     lien: "https://www.designspells.com/" },
+    { nom: "Showcase",           info: "Inspiration UI/UX",                    lien: "https://uiuxshowcase.com/" },
+  ]},
+  { emoji: "🔠", rubrique: "Fonderies", items: [
+    { nom: "Adobe Fonts",        cout: "Gratuit",       lien: "https://fonts.adobe.com/" },
+    { nom: "Google Fonts",       cout: "Gratuit",       lien: "https://fonts.google.com/?preview.layout=grid" },
+    { nom: "Open Foundry",       cout: "Gratuit",       lien: "https://open-foundry.com/" },
+    { nom: "Fontshare",          cout: "Gratuit",       lien: "https://www.fontshare.com/" },
+    { nom: "Pangram Pangram",    cout: "Essai gratuit", lien: "https://pangrampangram.com/" },
+    { nom: "Dinamo",             cout: "Essai gratuit", lien: "https://abcdinamo.com/" },
+    { nom: "205TF",              cout: "Essai gratuit", lien: "https://www.205.tf/" },
+    { nom: "Type Foundry Directory", cout: "Payant",    lien: "https://typefoundry.directory/" },
+  ]},
+  { emoji: "🛠️", rubrique: "Outils", items: [
+    { nom: "Muzli",              info: "Inspiration design quotidienne",       lien: "https://muz.li/" },
+    { nom: "Font Ninja",         info: "Identifier les polices d’un site",     lien: "https://www.fonts.ninja/" },
+    { nom: "Coolors",            info: "Générateur de palettes couleurs",      lien: "https://coolors.co/" },
+    { nom: "Grid Calculator",    info: "Configurateur de grilles de mise en page", lien: "http://gridcalculator.dk/" },
+    { nom: "Symbl",              info: "Mise en situation de logo",            lien: "https://www.symbl.space/" },
+    { nom: "Decks & Guidelines", info: "Inspiration de decks (Are.na)",        lien: "https://www.are.na/noah-ganhao/decks-and-guidelines" },
+    { nom: "RealityScan",        info: "Scanner 3D depuis son téléphone",      lien: "https://www.realityscan.com/mobile?lang=fr" },
+    { nom: "Generative Font Creator", info: "Créer une police personnalisée",  lien: "https://markdo27.github.io/generativefont_creator/" },
+  ]},
+  { emoji: "🧰", rubrique: "Ressources", items: [
+    { nom: "Mockup.Maison",      info: "Mockups photo et vidéo",               lien: "https://mockup.maison/" },
+    { nom: "Savee Marketplace",  info: "Templates design et motion",           lien: "https://marketplace.savee.com/" },
+    { nom: "Unblast",            info: "Mockups et ressources design",         lien: "https://unblast.com/" },
+    { nom: "MrMockup",           info: "Mockups et ressources design",         lien: "https://mrmockup.com/" },
+    { nom: "Creative Market",    info: "Assets et ressources créatives",       lien: "https://creativemarket.com/" },
+    { nom: "True Grit Texture Supply", info: "Brushes, textures et effets",    lien: "https://www.truegrittexturesupply.com/" },
+    { nom: "ena supply",         info: "Templates Framer et After Effects",    lien: "https://ena.supply/" },
+    { nom: "Made With GSAP",     info: "Effets et animations web",             lien: "https://madewithgsap.com/" },
+  ]},
+  { emoji: "🎙️", rubrique: "Podcasts", items: [
+    { nom: "TheBoldWay",         info: "Interviews de créatifs et entrepreneurs",         lien: "https://www.theboldway.fr/" },
+    { nom: "Graphic Matter",     info: "Podcast autour du graphisme et de la création",   lien: "https://podcast.ausha.co/graphic-matter" },
+  ]},
+];
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--surf:#161616;--surf2:#202020;--surf3:#2a2a2a;--bg:#000;--fg:#fff;--muted:#8a8a8a;--card:#141414;--line:#262626;--red:#E63A24;--pad:20px;--gap:16px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--fg);font-family:"Geist",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit}
+  [hidden]{display:none!important}
+  .up{font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+
+  /* En-tête : élément centré (Accueil + recherche + catégories) */
+  .topbar{position:sticky;top:0;z-index:30;background:var(--bg)}
+  header{display:flex;justify-content:center;align-items:center;gap:10px;padding:16px var(--pad)}
+  .ic-btn svg,.sbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .homebtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;transition:background .15s,color .15s}
+  .homebtn:hover{background:#222;color:#fff}
+  .homebtn.on{color:#fff}
+  .homebtn.on svg{fill:currentColor;fill-opacity:.12}
+  .spill{position:relative;display:flex;align-items:center;height:52px;flex:1;min-width:0;max-width:560px;background:var(--surf);border-radius:999px;padding:0 6px 0 18px;transition:background .15s,box-shadow .15s}
+  .spill:hover{background:var(--surf2)}
+  .spill:focus-within{box-shadow:0 0 0 1px #444}
+  .sbar{flex:1;min-width:0;display:flex;align-items:center;gap:12px;height:100%;color:#8f9a9a;cursor:text}
+  .sbar input{flex:1;min-width:0;height:100%;background:none;border:0;outline:none;color:var(--fg);font:inherit;font-size:16px}
+  .sbar input::placeholder{color:#8f9a9a;opacity:1}
+  .sbar input::-webkit-search-cancel-button{display:none}
+  .qclear{background:none;border:0;color:#8f9a9a;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;flex:none}
+  .qclear:hover{background:var(--surf3);color:#fff}
+  /* Suggestions de recherche : même panneau que les menus */
+  .spill .panel.sugg{left:0;right:0;width:auto;top:calc(100% + 10px);max-height:min(520px,72vh)}
+  .sugg.show{display:flex}
+  .sugg .opts{padding:4px 0 8px}
+  .opt .lbl b{font-weight:500;color:#fff}
+  .opt .lbl .sub{color:#777}
+  .opt .lbl mark{background:none;color:var(--red)}
+  .vis{width:26px;height:26px;flex:none;display:grid;place-items:center;color:var(--ink)}
+  .vis.th{width:22px;height:34px;border-radius:3px;overflow:hidden;background:#222}
+  .vis.th img{width:100%;height:100%;object-fit:cover}
+  .vis.ab{border:1px solid var(--ink);font-size:12px;width:24px;height:24px}
+  .vis.hash{border:1px solid #555;border-radius:50%;font-size:12px;color:#aaa;width:24px;height:24px}
+  .vis svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .opt.go{color:#fff}
+  .spill .sep{width:1px;height:26px;background:#3a3a3a;margin:0 4px 0 10px;flex:none}
+  .spill .dd{position:relative}
+  .catbtn{width:44px;height:44px;border-radius:50%;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;position:relative;transition:background .15s,color .15s}
+  .catbtn:hover,.dd.open .catbtn{background:#262626;color:#fff}
+  .catbtn .n{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;border-radius:999px;font-size:10px;min-width:16px;height:16px;display:grid;place-items:center;padding:0 4px}
+  .spill .panel{left:auto;right:-6px;top:calc(100% + 14px);font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .panel .ph{padding:14px 16px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#777}
+  kbd{font:inherit;font-size:10px;border:1px solid #333;border-radius:3px;padding:1px 5px;color:#777}
+
+  /* le bouton Catégories garde son pictogramme (pas le style des autres menus) */
+  .spill .catbtn{border:0;padding:0;width:44px;height:44px;border-radius:50%;background:none;display:grid;place-items:center}
+  .spill .catbtn:hover,.spill .dd.open .catbtn{background:#262626;border:0}
+  .spill .catbtn svg,.spill .dd.open .catbtn svg{width:22px;height:22px;transform:none}
+
+  .spill .catbtn.on{background:var(--surf3);color:#fff}
+
+  /* Vue « Boîte à outils » */
+  .vtitle{font-weight:400;font-size:28px;line-height:1;margin:8px 0 18px}
+  .bnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:40px}
+  .bnav button{background:var(--surf);border:0;border-radius:999px;height:36px;padding:0 14px;color:var(--ink);cursor:pointer;font-size:13px;transition:background .15s,color .15s}
+  .bnav button:hover{background:var(--surf2);color:#fff}
+  .bsec{margin-bottom:56px;scroll-margin-top:110px}
+  .bsec h2{font-weight:400;font-size:22px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .bsec h2 small{font-size:12px;color:var(--muted)}
+  .brows{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 16px}
+  .brow{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 12px;border-radius:12px;color:var(--fg);text-decoration:none;transition:background .15s}
+  a.brow:hover,a.brow:focus-visible{background:var(--surf)}
+  a.brow:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+  .brow .ini{position:relative;width:36px;height:36px;border-radius:9px;background:var(--surf);color:var(--ink);display:grid;place-items:center;font-size:15px;overflow:hidden}
+  .lt{font-weight:400}
+  .ini img,.vis img.fv{position:absolute;inset:0;margin:auto;width:20px;height:20px;object-fit:contain}
+  a.brow:hover .ini{background:var(--surf2)}
+  .vis.fav{position:relative;border:0;border-radius:6px;background:var(--surf2);width:26px;height:26px;font-size:12px;color:var(--ink)}
+  .vis.fav img.fv{width:16px;height:16px}
+  .brow .tx{min-width:0}
+  .brow .nm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .ds{font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .cost{display:inline-block;margin-top:4px;border:1px solid var(--ink);color:var(--ink);border-radius:999px;font-size:10px;line-height:14px;padding:0 7px;text-transform:uppercase;letter-spacing:.02em}
+  .brow .cost.pay{border-color:#555;color:#888}
+  .brow .dom{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;transition:color .15s}
+  a.brow:hover .dom{color:var(--ink)}
+  .brow.nolink{opacity:.55}
+  .brow mark{background:none;color:var(--red)}
+  @media (max-width:800px){ .brows{grid-template-columns:1fr} .brow .dom{display:none} .brow{grid-template-columns:36px minmax(0,1fr)} }
+
+  /* Sections par logiciel (vue Accueil) */
+  .sec{margin-bottom:72px}
+  .sec h2{font-weight:400;font-size:28px;line-height:1;margin-bottom:22px;display:flex;align-items:baseline;gap:12px}
+  .sec h2 button{background:none;border:0;cursor:pointer;font-size:inherit;text-transform:none;letter-spacing:0;transition:color .15s}
+  .sec h2 button:hover{color:var(--ink)}
+  .sec h2 small{font-size:12px;color:var(--muted);letter-spacing:.02em}
+
+  /* Barre de filtres (façon Awwwards) */
+  .fbar{background:var(--bg);border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;
+    display:flex;align-items:center;gap:10px;padding:10px var(--pad);flex-wrap:wrap}
+  .dd{position:relative}
+  .ddbtn{background:var(--surf);border:0;border-radius:999px;height:36px;padding:0 14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:var(--ink);transition:background .15s,color .15s}
+  .ddbtn:hover{background:var(--surf2);color:#fff}
+  .dd.open .ddbtn{background:var(--surf3);color:#fff}
+  .ddbtn .n{background:var(--red);color:#fff;border-radius:999px;font-size:10px;min-width:17px;height:17px;display:inline-grid;place-items:center;padding:0 5px}
+  .ddbtn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .2s}
+  .dd.open .ddbtn svg{transform:rotate(180deg)}
+  .panel{position:absolute;top:calc(100% + 10px);left:0;width:300px;background:var(--surf);border:0;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.7);
+    display:none;flex-direction:column;max-height:min(460px,70vh);z-index:40;overflow:hidden;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .dd.open .panel{display:flex}
+  .panel .ps{border-bottom:1px solid var(--surf3);padding:12px 16px}
+  .panel .ps input{text-transform:none;width:100%;background:none;border:0;outline:none;color:var(--fg);font:inherit;font-size:14px}
+  .panel .ps input::placeholder{color:#555}
+  .opts{overflow-y:auto;padding:6px 0}
+  .opt{text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;padding:9px 16px;cursor:pointer;text-align:left;font-size:14px;color:#ddd}
+  .opt:hover,.opt.sel{background:var(--surf2)}
+  .opt .box{width:14px;height:14px;border:1px solid #666;flex:none;display:grid;place-items:center}
+  .opt.on .box{background:var(--red);border-color:var(--red)}
+  .opt.on .box::after{content:"";width:6px;height:3px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+  .opt .lbl{flex:1}
+  .opt .c{color:#666;font-size:12px}
+  .opt.zero{opacity:.35}
+  .pfoot2{border-top:1px solid var(--surf3);padding:10px 16px;display:flex;justify-content:space-between}
+  .pfoot2 button{background:none;border:0;color:#8a8a8a;cursor:pointer}
+  .pfoot2 button:hover{color:#fff}
+  .pempty2{padding:12px;color:#666;font-size:13px}
+
+  .active{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
+  .pill{text-transform:none;letter-spacing:0;display:flex;gap:6px;align-items:center;background:var(--surf);border:0;border-radius:999px;height:36px;padding:0 12px 0 14px;cursor:pointer;font-size:13px;color:#fff}
+  .pill:hover{background:var(--surf2)}
+  .pill i{font-style:normal;color:#888}
+  .clear{background:none;border:0;color:#8a8a8a;cursor:pointer;text-decoration:underline;font-size:12px}
+  .clear:hover{color:#fff}
+  .right{display:flex;gap:16px;align-items:center;margin-left:auto}
+  .count{color:var(--muted)}
+  .sort{background:none;border:0;color:#8a8a8a;cursor:pointer}
+  .sort:hover{color:#fff}
+  .sort b{font-weight:400;color:var(--fg)}
+
+  /* Grille */
+  main{padding:28px var(--pad) 100px}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:28px var(--gap)}
+  .item{display:flex;flex-direction:column;gap:8px;min-width:0}
+  /* Carte tuto (d'après la maquette projet.svg) */
+  :root{--ink:#BDC9C9}
+  .card{position:relative;aspect-ratio:220/392;background:var(--card);overflow:hidden}
+  .card .cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+  .card .fb{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:18px;font-size:13px;text-transform:uppercase;color:#555}
+  .card .shade{position:absolute;inset:0;background:rgba(0,0,0,.5);transition:background .3s}
+  .card .lnk{position:absolute;inset:0;z-index:1}
+  .card:hover .shade,.card:focus-within .shade{background:rgba(0,0,0,.2)}
+  .card:hover .cover{transform:scale(1.03)}
+  .card .lnk:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+  .card .badge{position:absolute;left:10px;top:10px;z-index:2;width:30px;height:30px;border:1px solid var(--ink);background:none;
+    color:var(--ink);display:grid;place-items:center;font-size:17px;line-height:1;cursor:pointer;letter-spacing:-.01em;transition:all .15s}
+  .card .badge:hover,.card .badge.on{background:var(--ink);color:#000}
+  .card .pills{position:absolute;left:10px;right:10px;bottom:16px;z-index:2;display:flex;flex-wrap:wrap;gap:6px}
+  .card .pills button{border:1px solid var(--ink);background:none;color:var(--ink);border-radius:999px;height:14px;padding:0 6px;
+    font-size:8.5px;line-height:12px;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;transition:all .15s}
+  .card .pills button:hover,.card .pills button.on{background:var(--ink);color:#000}
+  /* Symbole du logiciel et tags : visibles au survol (toujours visibles sur écran tactile) */
+  .card .badge,.card .pills{opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s,background .15s,color .15s}
+  .card .pills{transform:translateY(-4px)}
+  .card:hover .badge,.card:hover .pills,.card:focus-within .badge,.card:focus-within .pills{opacity:1;transform:none}
+  @media (hover:none){ .card .badge,.card .pills{opacity:1;transform:none} }
+  .card .plat{position:absolute;right:10px;top:10px;z-index:2;font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink);opacity:.7;pointer-events:none}
+  .card.txt{background:#0d0d0d;border:1px solid #222}
+  .card.txt .fb{color:var(--ink);font-size:15px}
+  .ttl{margin-top:16px;font-size:12px;line-height:1.3;text-transform:uppercase;letter-spacing:.01em}
+  .ttl a{color:var(--ink);text-decoration:none;transition:color .15s}
+  .ttl a:hover{color:#fff}
+  .grid{row-gap:32px}
+  .empty{padding:80px 0;text-align:center;color:var(--muted)}
+  .empty button{background:none;border:0;color:var(--fg);text-decoration:underline;cursor:pointer;margin-left:6px}
+  mark{background:none;color:var(--red)}
+
+  /* Écran « accès réservé » */
+  .gate{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;padding:var(--pad)}
+  .gate[hidden]{display:none}
+  .gate form{width:min(360px,100%);display:flex;flex-direction:column;gap:18px}
+  .gate .brandg{font-size:12px;line-height:14px;text-transform:uppercase;margin-bottom:30px}
+  .gate h1{font-weight:400;font-size:28px}
+  .gate p.sub{color:var(--muted);font-size:14px;line-height:1.45}
+  .gate input{background:none;border:0;border-bottom:1px solid #333;padding:10px 0;font:inherit;font-size:18px;color:var(--fg);outline:none}
+  .gate input:focus{border-color:#fff}
+  .gate .go2{background:var(--red);border:0;color:#fff;padding:12px 20px;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .gate .go2:disabled{opacity:.5}
+  .gate .err{color:var(--red);font-size:13px;min-height:16px}
+  .gate .legal{position:absolute;bottom:20px;left:var(--pad);font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+  .gate .legal a{color:#666;text-decoration:none}
+  .foot .out{background:none;border:0;color:#666;cursor:pointer;margin-left:24px}
+  .foot .out:hover{color:#fff}
+  .foot{padding:0 var(--pad) 40px}
+  .foot a{color:#666;text-decoration:none}
+  .foot a:hover{color:var(--fg)}
+
+  @media (max-width:1200px){ .grid{grid-template-columns:repeat(5,1fr)} nav{gap:36px} }
+  @media (max-width:1000px){ .grid{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:800px){
+    header{padding:12px var(--pad)}
+    .homebtn{width:46px;height:46px}
+    .spill{height:46px;padding-left:14px}
+    .sbar input{font-size:15px}
+    .spill .panel.sugg{position:fixed;left:var(--pad);right:var(--pad);top:70px}
+    .spill .panel{position:fixed;left:var(--pad);right:var(--pad);top:74px;width:auto}
+    .grid{grid-template-columns:repeat(3,1fr)}
+    kbd{display:none}
+    .dd{position:static}
+    .panel{left:var(--pad);right:var(--pad);width:auto}
+    .right{width:100%;justify-content:space-between}
+  }
+  @media (max-width:520px){ .grid{grid-template-columns:repeat(2,1fr);gap:22px 10px} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<header>
+  <button class="homebtn ic-btn" id="home" type="button" aria-label="Accueil : tous les tutos par logiciel" title="Accueil">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5a1.5 1.5 0 0 0-1.5-1.5h-3A1.5 1.5 0 0 0 9 15v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>
+  </button>
+  <div class="spill">
+    <label class="sbar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+      <input type="search" id="q" placeholder="Que souhaitez-vous apprendre aujourd’hui ?" autocomplete="off" spellcheck="false"
+        aria-label="Rechercher un tuto, un logiciel, une catégorie ou un tag" role="combobox" aria-expanded="false" aria-controls="sugg">
+    </label>
+    <button type="button" class="qclear" id="qClear" aria-label="Effacer la recherche" hidden>✕</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button class="catbtn ic-btn" id="catsBtn" type="button" aria-label="Boîte à outils" title="Boîte à outils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg><span class="n" hidden></span></button>
+    <div class="panel sugg" id="sugg" role="listbox"><div class="opts" id="suggList"></div></div>
+  </div>
+</header>
+
+<div class="fbar up" id="fbar">
+  <div class="dd" id="ddCol">
+    <button class="ddbtn" type="button" aria-haspopup="true">Logiciels <span class="n" hidden></span>
+      <svg viewBox="0 0 10 10"><path d="M1 3l4 4 4-4"/></svg></button>
+    <div class="panel" role="menu">
+      <div class="opts"></div>
+      <div class="pfoot2"><button type="button" data-clear>Effacer</button><button type="button" data-close>Fermer</button></div>
+    </div>
+  </div>
+  <div class="dd" id="ddTyp">
+    <button class="ddbtn" type="button" aria-haspopup="true">Catégories <span class="n" hidden></span>
+      <svg viewBox="0 0 10 10"><path d="M1 3l4 4 4-4"/></svg></button>
+    <div class="panel" role="menu">
+      <div class="opts"></div>
+      <div class="pfoot2"><button type="button" data-clear>Effacer</button><button type="button" data-close>Fermer</button></div>
+    </div>
+  </div>
+  <div class="dd" id="ddTag">
+    <button class="ddbtn" type="button" aria-haspopup="true">Tags <span class="n" hidden></span>
+      <svg viewBox="0 0 10 10"><path d="M1 3l4 4 4-4"/></svg></button>
+    <div class="panel" role="menu">
+      <div class="ps"><input type="text" placeholder="Chercher un tag…" aria-label="Chercher un tag" autocomplete="off"></div>
+      <div class="opts"></div>
+      <div class="pfoot2"><button type="button" data-clear>Effacer</button><button type="button" data-close>Fermer</button></div>
+    </div>
+  </div>
+  <div class="active" id="active"></div>
+  <div class="right">
+    <span class="count" id="count"></span>
+    <button class="sort" type="button" id="sort">Tri : <b>Récents</b></button>
+  </div>
+</div>
+</div>
+
+<main id="top"><div id="results"></div><p class="empty" id="empty" hidden></p></main>
+
+<footer class="foot up"><a href="mentions-legales.html">Mentions légales &amp; confidentialité</a><button type="button" class="out" id="logout" hidden>Se déconnecter</button></footer>
+
+<div class="gate" id="gate" hidden>
+  <form id="gateForm" autocomplete="off">
+    <h1>Accès réservé</h1>
+    <p class="sub">Entre le mot de passe donné en cours pour accéder aux tutos.</p>
+    <input type="password" id="cle" placeholder="Mot de passe" aria-label="Mot de passe" autocomplete="current-password">
+    <button type="button" class="go2" id="gateBtn">Entrer</button>
+    <p class="err" id="gateErr"></p>
+  </form>
+  <p class="legal"><a href="mentions-legales.html">Mentions légales</a></p>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const slug = s => norm(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "autre";
+  const NOM = { tiktok: "TikTok", youtube: "YouTube", instagram: "Instagram" };
+
+  /* ---------- Données ---------- */
+  function parseUrl(url) {
+    const u = String(url).trim();
+    let m = u.match(/tiktok\.com\/.*\/(?:video|photo)\/(\d+)/i);
+    if (m) return { type: "tiktok", id: m[1], url: u };
+    m = u.match(/(?:youtube\.com\/(?:shorts\/|watch\?(?:.*&)?v=|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+    if (m) return { type: "youtube", id: m[1], url: u };
+    m = u.match(/instagram\.com\/(?:[\w.]+\/)?(reel|reels|p|tv)\/([\w-]+)/i);
+    if (m) return { type: "instagram", id: m[2], url: u };
+    return { type: "bad", url: u };
+  }
+  let ALL = [];                  // tous les tutos
+  const tagLabel = new Map();    // clé normalisée -> libellé affiché
+  const typoLabel = new Map();   // catégories (Web, Print…)
+
+  function addTuto(o, cat, order) {
+    const t = parseUrl(o.url || o.lien || "");
+    if (t.type === "bad") return;
+    t.titre = (o.titre || "").trim();
+    t.auteur = (o.auteur || "").trim();
+    t.tags = (o.tags || []).map(s => String(s).trim()).filter(Boolean);
+    t.tagKeys = t.tags.map(norm);
+    t.typos = (o.categories || []).map(s => String(s).trim()).filter(Boolean);
+    t.typoKeys = t.typos.map(norm);
+    t.typos.forEach(c => { if (!typoLabel.has(norm(c))) typoLabel.set(norm(c), c); });
+    t.tags.forEach(tg => { if (!tagLabel.has(norm(tg))) tagLabel.set(norm(tg), tg); });
+    t.cat = cat; t.order = order;
+    t.hay = norm([t.titre, t.auteur, cat.label, ...t.tags, ...t.typos].join(" "));
+    ALL.push(t);
+  }
+
+  // Mot de passe étudiant, mémorisé sur l'appareil après la première connexion
+  const KEY = "tutos-cle";
+  const getCle = () => { try { return localStorage.getItem(KEY) || ""; } catch (e) { return ""; } };
+  const setCle = v => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  class AccessError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
+
+  async function load(cle) {
+    if (API_URL.trim()) {
+      const res = await fetch(API_URL, {
+        method: "POST", cache: "no-store",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "lire", cle })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new AccessError(data.code || "", data.error || "Erreur");
+      data.tutos.forEach((x, i) => {
+        const label = (x.logiciel || "").trim() || "Autres";
+        let cat = CATEGORIES.find(c => norm(c.label) === norm(label) || c.id === slug(label));
+        if (!cat) { cat = { id: slug(label), label }; CATEGORIES.push(cat); }
+        addTuto(x, cat, i);
+      });
+    } else {
+      let i = 0;
+      CATEGORIES.forEach(cat => (TUTOS[cat.id] || []).forEach(e => addTuto(typeof e === "string" ? { url: e } : e, cat, i++)));
+    }
+  }
+
+  /* ---------- État des filtres (gardé dans l'adresse, pour partager un lien filtré) ---------- */
+  const state = { view: "home", cols: new Set(), typos: new Set(), tags: new Set(), q: "", sort: "recent" };
+  function readUrl() {
+    const p = new URLSearchParams(location.search);
+    (p.get("logiciel") || "").split(",").filter(Boolean).forEach(c => state.cols.add(c));
+    (p.get("categorie") || "").split(",").filter(Boolean).forEach(c => state.typos.add(norm(c)));
+    (p.get("tags") || "").split(",").filter(Boolean).forEach(t => state.tags.add(norm(t)));
+    state.q = p.get("q") || "";
+    state.sort = p.get("tri") === "az" ? "az" : "recent";
+    state.view = p.get("vue") === "outils" ? "boite" : "home";
+  }
+  function writeUrl() {
+    const p = new URLSearchParams();
+    if (state.cols.size) p.set("logiciel", [...state.cols].join(","));
+    if (state.typos.size) p.set("categorie", [...state.typos].join(","));
+    if (state.tags.size) p.set("tags", [...state.tags].join(","));
+    if (state.q) p.set("q", state.q);
+    if (state.sort === "az") p.set("tri", "az");
+    if (state.view === "boite") p.set("vue", "outils");
+    try { history.replaceState(null, "", (p.toString() ? "?" + p : location.pathname) ); } catch (e) {}
+  }
+
+  /* ---------- Filtrage (logiciels et catégories : l'un ou l'autre ; tags : tous requis) ---------- */
+  const words = () => norm(state.q).split(/\s+/).filter(Boolean);
+  function match(t, { skipCols = false, skipTypos = false, skipTags = false } = {}) {
+    if (!skipCols && state.cols.size && !state.cols.has(t.cat.id)) return false;
+    if (!skipTypos && state.typos.size && !t.typoKeys.some(k => state.typos.has(k))) return false;
+    if (!skipTags) for (const k of state.tags) if (!t.tagKeys.includes(k)) return false;
+    return words().every(w => t.hay.includes(w));
+  }
+
+  function render() {
+    $("catsBtn").classList.toggle("on", state.view === "boite");
+    $("fbar").hidden = state.view === "boite";
+    if (state.view === "boite") { renderBoite(); writeUrl(); return; }
+    let list = ALL.filter(t => match(t));
+    list = state.sort === "az"
+      ? list.sort((a, b) => (a.titre || "~").localeCompare(b.titre || "~", "fr"))
+      : list.sort((a, b) => b.order - a.order);
+    const out = $("results");
+    out.innerHTML = "";
+    const filtering = state.cols.size || state.typos.size || state.tags.size || state.q;
+    const mkGrid = items => { const g = document.createElement("div"); g.className = "grid"; items.forEach(t => g.appendChild(t.el || (t.el = makeItem(t)))); return g; };
+    if (filtering) out.appendChild(mkGrid(list));
+    else CATEGORIES.forEach(c => {          // Accueil : tutos rangés par logiciel
+      const items = list.filter(t => t.cat.id === c.id);
+      if (!items.length) return;
+      const sec = document.createElement("section");
+      sec.className = "sec"; sec.id = c.id;
+      sec.innerHTML = `<h2><button type="button" data-c="${c.id}" title="Voir seulement ${esc(c.label)}">${esc(c.label)}</button><small>${items.length} tuto${items.length > 1 ? "s" : ""}</small></h2>`;
+      sec.querySelector("h2 button").onclick = () => { state.cols.clear(); state.cols.add(c.id); render(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+      sec.appendChild(mkGrid(items));
+      out.appendChild(sec);
+    });
+    $("home").classList.toggle("on", !filtering);
+    if (document.activeElement !== qIn) qIn.value = state.q;
+    $("qClear").hidden = !qIn.value;
+    list.forEach(t => {
+      t.el.querySelectorAll(".pills button").forEach(b => b.classList.toggle("on", state.tags.has(b.dataset.tag)));
+      t.el.querySelector(".badge").classList.toggle("on", state.cols.has(t.cat.id));
+    });
+    $("count").textContent = list.length + " tuto" + (list.length > 1 ? "s" : "");
+    const e = $("empty");
+    e.hidden = list.length > 0;
+    e.innerHTML = ALL.length ? `Aucun tuto ne correspond à ces filtres.<button type="button">Tout effacer</button>` : "Aucun tuto pour l'instant.";
+    const b = e.querySelector("button"); if (b) b.onclick = clearAll;
+    $("sort").innerHTML = `Tri : <b>${state.sort === "az" ? "A → Z" : "Récents"}</b>`;
+    renderPanels(); renderActive(); writeUrl();
+  }
+
+  /* ---------- Bouton Accueil : tous les tutos, rangés par logiciel ---------- */
+  $("home").addEventListener("click", () => { clearAll(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+
+  /* ---------- Bouton Boîte à outils ---------- */
+  $("catsBtn").addEventListener("click", () => {
+    state.view = state.view === "boite" ? "home" : "boite";
+    state.q = ""; render(); window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  const domaine = url => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
+  const initiale = nom => (nom.replace(/[^A-Za-z0-9À-ÿ]/g, "")[0] || "?").toUpperCase();
+  // Favicon du site (service de Google) ; si l'image ne charge pas, l'initiale reste visible
+  const favicon = (url, cls = "") => {
+    const d = domaine(url);
+    return d ? `<img class="${cls}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+      src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(d)}&sz=64"
+      onload="var l=this.parentNode.querySelector('.lt');if(l)l.style.visibility='hidden'" onerror="this.remove()">` : "";
+  };
+  function boiteItems() {
+    return BOITE.flatMap(r => r.items.map(it => ({ ...it, r, hay: norm([it.nom, it.info || "", it.cout || "", r.rubrique, domaine(it.lien)].join(" ")) })));
+  }
+  function renderBoite() {
+    $("home").classList.remove("on");
+    $("empty").hidden = true;
+    const ws = words();
+    const secs = BOITE.map((r, i) => ({ r, i, items: r.items.filter(it => ws.every(w => norm([it.nom, it.info || "", it.cout || "", r.rubrique, domaine(it.lien)].join(" ")).includes(w))) }))
+      .filter(s => s.items.length);
+    const row = it => {
+      const d = domaine(it.lien);
+      const sub = it.cout
+        ? `<span class="cost${/payant/i.test(it.cout) ? " pay" : ""}">${esc(it.cout)}</span>`
+        : `<div class="ds">${hl(it.info || "", ws)}</div>`;
+      const inner = `<span class="ini" aria-hidden="true"><b class="lt">${esc(initiale(it.nom))}</b>${favicon(it.lien)}</span>
+        <div class="tx"><div class="nm">${hl(it.nom, ws)}</div>${sub}</div>
+        <span class="dom">${d ? esc(d) + " ↗" : "lien à venir"}</span>`;
+      return it.lien
+        ? `<a class="brow" href="${esc(it.lien)}" target="_blank" rel="noopener">${inner}</a>`
+        : `<div class="brow nolink">${inner}</div>`;
+    };
+    const total = secs.reduce((n, s) => n + s.items.length, 0);
+    $("results").innerHTML = `<h1 class="vtitle">Boîte à outils</h1>
+      ${ws.length ? `<p class="count" style="margin-bottom:24px">${total} résultat${total > 1 ? "s" : ""} pour « ${esc(state.q)} »</p>` : `<div class="bnav">${BOITE.map((r, i) => `<button type="button" data-i="${i}">${r.emoji} ${esc(r.rubrique)}</button>`).join("")}</div>`}
+      ${secs.map(s => `<section class="bsec" id="outils-${s.i}"><h2>${s.r.emoji} ${esc(s.r.rubrique)}<small>${s.items.length}</small></h2>
+        <div class="brows">${s.items.map(row).join("")}</div></section>`).join("")}
+      ${secs.length ? "" : `<p class="empty">Aucun outil ne correspond à « ${esc(state.q)} ».</p>`}`;
+    $("results").querySelectorAll(".bnav button").forEach(b => b.onclick = () =>
+      document.getElementById("outils-" + b.dataset.i).scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  /* ---------- Menus déroulants ---------- */
+  function renderPanels() {
+    // Logiciels : nombres calculés avec les autres filtres actifs
+    const colOpts = CATEGORIES.map(c => {
+      const n = ALL.filter(t => t.cat.id === c.id && match(t, { skipCols: true })).length;
+      return `<button type="button" class="opt${state.cols.has(c.id) ? " on" : ""}${n ? "" : " zero"}" data-v="${c.id}" role="menuitemcheckbox" aria-checked="${state.cols.has(c.id)}">
+        <span class="box"></span><span class="lbl">${esc(c.label)}</span><span class="c">${n}</span></button>`;
+    }).join("");
+    $("ddCol").querySelector(".opts").innerHTML = colOpts;
+    setBadge("ddCol", state.cols.size);
+
+    // Catégories des tutos (Web, Print…)
+    const typKeys = [...typoLabel.keys()].sort((a, b) => typoLabel.get(a).localeCompare(typoLabel.get(b), "fr"));
+    $("ddTyp").querySelector(".opts").innerHTML = typKeys.length ? typKeys.map(k => {
+      const n = ALL.filter(t => t.typoKeys.includes(k) && match(t, { skipTypos: true })).length;
+      return `<button type="button" class="opt${state.typos.has(k) ? " on" : ""}${n ? "" : " zero"}" data-v="${esc(k)}" role="menuitemcheckbox" aria-checked="${state.typos.has(k)}">
+        <span class="box"></span><span class="lbl">${esc(typoLabel.get(k))}</span><span class="c">${n}</span></button>`;
+    }).join("") : `<p class="pempty2">Les catégories apparaîtront ici.</p>`;
+    setBadge("ddTyp", state.typos.size);
+
+
+
+    // Tags : triés par popularité, filtrables
+    const qTag = norm($("ddTag").querySelector("input").value);
+    // nombre de tutos obtenus si l'on ajoute ce tag aux filtres actuels
+    const shown = ALL.filter(t => match(t));
+    const keys = [...tagLabel.keys()].filter(k => !qTag || k.includes(qTag))
+      .map(k => ({ k, n: shown.filter(t => t.tagKeys.includes(k)).length }))
+      .sort((a, b) => (state.tags.has(b.k) - state.tags.has(a.k)) || b.n - a.n || tagLabel.get(a.k).localeCompare(tagLabel.get(b.k), "fr"));
+    $("ddTag").querySelector(".opts").innerHTML = keys.length ? keys.map(({ k, n }) =>
+      `<button type="button" class="opt${state.tags.has(k) ? " on" : ""}${n || state.tags.has(k) ? "" : " zero"}" data-v="${esc(k)}" role="menuitemcheckbox" aria-checked="${state.tags.has(k)}">
+        <span class="box"></span><span class="lbl">${esc(tagLabel.get(k))}</span><span class="c">${n}</span></button>`).join("")
+      : `<p class="pempty2">${tagLabel.size ? "Aucun tag trouvé." : "Les tags apparaîtront ici."}</p>`;
+    setBadge("ddTag", state.tags.size);
+  }
+  function setBadge(id, n) { const s = $(id).querySelector(".n"); s.hidden = !n; s.textContent = n; }
+
+  function wireDropdown(id, set) {
+    const dd = $(id);
+    dd.querySelector(".ddbtn").addEventListener("click", e => {
+      e.stopPropagation();
+      const open = !dd.classList.contains("open");
+      document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open"));
+      if (open) { dd.classList.add("open"); const i = dd.querySelector("input"); if (i) setTimeout(() => i.focus(), 0); }
+    });
+    dd.querySelector(".panel").addEventListener("click", e => {
+      e.stopPropagation();
+      const o = e.target.closest(".opt");
+      if (o) { const v = o.dataset.v; set.has(v) ? set.delete(v) : set.add(v); render(); return; }
+      if (e.target.closest("[data-clear]")) { set.clear(); render(); }
+      if (e.target.closest("[data-close]")) dd.classList.remove("open");
+    });
+    const inp = dd.querySelector("input");
+    if (inp) inp.addEventListener("input", renderPanels);
+  }
+  wireDropdown("ddCol", state.cols);
+  wireDropdown("ddTyp", state.typos);
+  wireDropdown("ddTag", state.tags);
+  document.addEventListener("click", () => document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open")));
+  document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open")); });
+
+  /* ---------- Filtres actifs ---------- */
+  function renderActive() {
+    const pills = [];
+    if (state.q) pills.push(`<button type="button" class="pill q" data-k="q">« ${esc(state.q)} » <i>✕</i></button>`);
+    state.cols.forEach(c => { const cat = CATEGORIES.find(x => x.id === c); if (cat) pills.push(`<button type="button" class="pill" data-k="c" data-v="${c}">${esc(cat.label)} <i>✕</i></button>`); });
+    state.typos.forEach(k => pills.push(`<button type="button" class="pill" data-k="y" data-v="${esc(k)}">${esc(typoLabel.get(k) || k)} <i>✕</i></button>`));
+    state.tags.forEach(k => pills.push(`<button type="button" class="pill" data-k="t" data-v="${esc(k)}">#${esc(tagLabel.get(k) || k)} <i>✕</i></button>`));
+    if (pills.length > 1) pills.push(`<button type="button" class="clear" data-k="all">Tout effacer</button>`);
+    $("active").innerHTML = pills.join("");
+  }
+  $("active").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const k = b.dataset.k, v = b.dataset.v;
+    if (k === "q") state.q = ""; if (k === "c") state.cols.delete(v); if (k === "t") state.tags.delete(v); if (k === "y") state.typos.delete(v);
+    if (k === "all") return clearAll();
+    render();
+  });
+  function clearAll() { state.view = "home"; state.cols.clear(); state.typos.clear(); state.tags.clear(); state.q = ""; render(); }
+
+  $("sort").addEventListener("click", () => { state.sort = state.sort === "az" ? "recent" : "az"; render(); });
+
+  /* ---------- Cartes ---------- */
+  // Abréviation du logiciel (Ps, Ai, Id…) : "abbr" dans CATEGORIES, sinon 2 premières lettres
+  function abbr(cat) {
+    if (cat.abbr) return cat.abbr;
+    const l = cat.label.replace(/[^A-Za-zÀ-ÿ]/g, "");
+    return (l[0] || "?").toUpperCase() + (l[1] || "").toLowerCase();
+  }
+
+  function makeItem(t) {
+    const wrap = document.createElement("div");
+    wrap.className = "item";
+    const href = t.type === "youtube" ? `https://www.youtube.com/shorts/${t.id}` : t.url;
+    const titre = t.titre || "Tuto " + NOM[t.type];
+    const visual = t.type === "youtube"
+      ? `<div class="fb">${esc(titre)}</div>
+         <img class="cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="https://i.ytimg.com/vi/${t.id}/oar2.jpg"
+           onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${t.id}/hqdefault.jpg'}else{this.remove()}">
+         <div class="shade"></div>`
+      : `<div class="fb">${esc(titre)}</div><span class="plat">${NOM[t.type]}</span>`;
+    wrap.innerHTML = `
+      <div class="card ${t.type === "youtube" ? "yt" : "txt"}">
+        ${visual}
+        <a class="lnk" href="${esc(href)}" target="_blank" rel="noopener" aria-label="${esc(titre)} — voir sur ${NOM[t.type]} (nouvel onglet)"></a>
+        <button type="button" class="badge" data-c="${t.cat.id}" title="Logiciel : ${esc(t.cat.label)}">${esc(abbr(t.cat))}</button>
+        ${t.tags.length ? `<div class="pills">${t.tags.slice(0, 4).map(tg => `<button type="button" data-tag="${esc(norm(tg))}">${esc(tg)}</button>`).join("")}</div>` : ""}
+      </div>
+      <div class="ttl"><a href="${esc(href)}" target="_blank" rel="noopener">${esc(titre)}</a></div>`;
+    wrap.querySelector(".card").addEventListener("click", e => {
+      const tb = e.target.closest("button[data-tag]");
+      if (tb) { const k = tb.dataset.tag; state.tags.has(k) ? state.tags.delete(k) : state.tags.add(k); render(); return; }
+      const cb = e.target.closest("button.badge");
+      if (cb) { const c = cb.dataset.c; state.cols.has(c) ? state.cols.delete(c) : state.cols.add(c); render(); }
+    });
+    return wrap;
+  }
+
+  /* ---------- Recherche dans la barre + suggestions ---------- */
+  const qIn = $("q"), sugg = $("sugg"), sList = $("suggList");
+  let rows = [], sel = -1, qTimer;
+  const ICON_SEARCH = `<span class="vis"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg></span>`;
+  const ICON_CAT = `<span class="vis"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9"/><path d="M5.5 7.5h13"/><rect x="4" y="11" width="16" height="9.5" rx="2.5"/><rect x="9" y="14.5" width="6" height="2.6" rx="1.3"/></svg></span>`;
+  function hl(text, ws) {
+    if (!ws.length) return esc(text);
+    const n = norm(text), marks = [];
+    ws.forEach(w => { const i = n.indexOf(w); if (i >= 0) marks.push([i, i + w.length]); });
+    marks.sort((a, b) => b[0] - a[0]);
+    let s = text; marks.forEach(([a, b]) => { s = s.slice(0, a) + "\u0001" + s.slice(a, b) + "\u0002" + s.slice(b); });
+    return esc(s).replace(/\u0001/g, "<mark>").replace(/\u0002/g, "</mark>");
+  }
+  function openLink(url) { const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); }
+  const plural = n => n + " tuto" + (n > 1 ? "s" : "");
+
+  function showSugg(v) { sugg.classList.toggle("show", v); qIn.setAttribute("aria-expanded", v); if (v) document.querySelectorAll(".dd.open").forEach(d => d.classList.remove("open")); }
+  function renderSugg() {
+    const raw = qIn.value.trim(), ws = norm(raw).split(/\s+/).filter(Boolean);
+    rows = []; const groups = [];
+    const has = (s) => ws.every(w => norm(s).includes(w));
+    if (raw) rows.push({ cls: "go", keepView: true, html: `${ICON_SEARCH}<span class="lbl">Rechercher « ${esc(raw)} »${state.view === "boite" ? " dans la boîte à outils" : ""}</span>`, run: () => { state.q = raw; render(); } });
+    const tutos = ALL.filter(t => ws.every(w => t.hay.includes(w))).sort((a, b) => b.order - a.order).slice(0, raw ? 6 : 4);
+    if (tutos.length) groups.push([raw ? "Tutos" : "Derniers tutos", tutos.map(t => ({
+      html: (t.type === "youtube"
+          ? `<span class="vis th"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="https://i.ytimg.com/vi/${t.id}/oar2.jpg" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://i.ytimg.com/vi/${t.id}/hqdefault.jpg'}else{this.remove()}"></span>`
+          : `<span class="vis ab">${esc(abbr(t.cat))}</span>`) +
+        `<span class="lbl"><b>${hl(t.titre || "Tuto " + NOM[t.type], ws)}</b><span class="sub"> — ${esc(t.cat.label)}</span></span>`,
+      run: () => openLink(t.type === "youtube" ? `https://www.youtube.com/shorts/${t.id}` : t.url) }))]);
+    const logs = CATEGORIES.map(c => [c, ALL.filter(t => t.cat.id === c.id).length]).filter(([c, n]) => n && raw && has(c.label));
+    if (logs.length) groups.push(["Logiciels", logs.map(([c, n]) => ({
+      html: `<span class="vis ab">${esc(abbr(c))}</span><span class="lbl"><b>${hl(c.label, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
+      run: () => { state.q = ""; state.cols.clear(); state.cols.add(c.id); render(); } }))]);
+    const typs = [...typoLabel.entries()].map(([k, l]) => [k, l, ALL.filter(t => t.typoKeys.includes(k)).length]).filter(([k, l, n]) => n && raw && has(l));
+    if (typs.length) groups.push(["Catégories", typs.map(([k, l, n]) => ({
+      html: `${ICON_CAT}<span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
+      run: () => { state.q = ""; state.typos.clear(); state.typos.add(k); render(); } }))]);
+    const tags = [...tagLabel.entries()].map(([k, l]) => [k, l, ALL.filter(t => t.tagKeys.includes(k)).length]).filter(([k, l, n]) => n && raw && has(l)).slice(0, 6);
+    if (tags.length) groups.push(["Tags", tags.map(([k, l, n]) => ({
+      html: `<span class="vis hash">#</span><span class="lbl"><b>${hl(l, ws)}</b><span class="sub"> — ${plural(n)}</span></span>`,
+      run: () => { state.q = ""; state.tags.add(k); render(); } }))]);
+    const outils = raw ? boiteItems().filter(it => it.lien && ws.every(w => it.hay.includes(w))).slice(0, 5) : [];
+    if (outils.length) groups.push(["Boîte à outils", outils.map(it => ({
+      html: `<span class="vis fav"><b class="lt">${esc(initiale(it.nom))}</b>${favicon(it.lien, "fv")}</span><span class="lbl"><b>${hl(it.nom, ws)}</b><span class="sub"> — ${esc(it.info || it.cout || it.r.rubrique)}</span></span>`,
+      keepView: true, run: () => openLink(it.lien) }))]);
+    let html = rows.length ? `<button type="button" class="opt go" data-i="0" role="option">${rows[0].html}</button>` : "";
+    groups.forEach(([label, list]) => { html += `<p class="ph">${label}</p>`; list.forEach(r => { html += `<button type="button" class="opt" data-i="${rows.length}" role="option">${r.html}</button>`; rows.push(r); }); });
+    if (!groups.length && raw) html += `<p class="pempty2">Aucun tuto, logiciel, catégorie ou tag ne correspond.</p>`;
+    sList.innerHTML = html; sel = -1; paint();
+    showSugg(!!html);
+  }
+  function paint() { sList.querySelectorAll(".opt").forEach(r => r.classList.toggle("sel", +r.dataset.i === sel)); const c = sList.querySelector(".opt.sel"); c && c.scrollIntoView({ block: "nearest" }); }
+  function run(i) { const r = rows[i]; showSugg(false); qIn.blur(); if (r && !r.keepView) state.view = "home"; if (r) r.run(); }
+
+  qIn.addEventListener("focus", renderSugg);
+  qIn.addEventListener("input", () => {
+    $("qClear").hidden = !qIn.value;
+    renderSugg();
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => { state.q = qIn.value.trim(); render(); }, 200);   // dans la boîte à outils, filtre les outils   // la grille se filtre en tapant
+  });
+  qIn.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") { e.preventDefault(); sel = Math.min(rows.length - 1, sel + 1); paint(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); sel = Math.max(-1, sel - 1); paint(); }
+    else if (e.key === "Enter") { e.preventDefault(); clearTimeout(qTimer); if (sel >= 0) run(sel); else { state.q = qIn.value.trim(); render(); showSugg(false); qIn.blur(); } }
+    else if (e.key === "Escape") { e.preventDefault(); showSugg(false); qIn.blur(); }
+  });
+  sList.addEventListener("mousemove", e => { const r = e.target.closest(".opt"); if (r && +r.dataset.i !== sel) { sel = +r.dataset.i; paint(); } });
+  sList.addEventListener("mousedown", e => e.preventDefault());   // garde le focus pendant le clic
+  sList.addEventListener("click", e => { const r = e.target.closest(".opt"); if (r) run(+r.dataset.i); });
+  qIn.addEventListener("blur", () => setTimeout(() => showSugg(false), 120));
+  $("qClear").addEventListener("click", () => { qIn.value = ""; state.q = ""; $("qClear").hidden = true; render(); qIn.focus(); });
+  document.addEventListener("keydown", e => {
+    const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+    if (!$("gate").hidden) return;
+    if ((e.key === "/" && !typing) || (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey))) { e.preventDefault(); qIn.focus(); qIn.select(); }
+  });
+
+  /* ---------- Démarrage (avec écran d'accès) ---------- */
+  function showGate(msg) {
+    $("gate").hidden = false; $("gateErr").textContent = msg || "";
+    $("count").textContent = "";
+    setTimeout(() => $("cle").focus(), 50);
+  }
+  async function start(cle) {
+    $("count").textContent = "Chargement…";
+    $("gateBtn").disabled = true;
+    try {
+      ALL = []; await load(cle);
+    } catch (err) {
+      $("gateBtn").disabled = false;
+      if (err.code === "cle") { setCle(""); return showGate(cle ? "Mot de passe incorrect." : ""); }
+      if (err.code === "ferme") { setCle(""); return showGate("Le site n'est pas encore ouvert aux étudiants."); }
+      console.warn("API :", err);
+      if (!$("gate").hidden) { $("gateErr").textContent = "Impossible de joindre le site. Réessaie dans un instant."; return; }
+      $("count").textContent = ""; $("empty").hidden = false;
+      $("empty").textContent = "Impossible de charger les tutos pour le moment. Réessaie dans un instant.";
+      return;
+    }
+    $("gateBtn").disabled = false;
+    if (API_URL.trim()) { setCle(cle); $("logout").hidden = false; }
+    $("gate").hidden = true;
+    readUrl();
+    render();
+  }
+  function submitGate() { const v = $("cle").value.trim(); if (!v) return; $("gateErr").textContent = ""; start(v); }
+  $("gateForm").addEventListener("submit", e => e.preventDefault());
+  $("gateBtn").addEventListener("click", submitGate);
+  $("cle").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitGate(); } });
+  $("logout").addEventListener("click", () => { setCle(""); location.reload(); });
+
+  if (API_URL.trim() && !getCle()) showGate();
+  else start(getCle());
+})();
+</script>
+</body>
+</html>
