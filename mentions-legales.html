@@ -18,9 +18,10 @@
   .sig{position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;text-decoration:none;transition:color .15s}
   .sig:hover{color:#fff}
   .sig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
-  .navlink{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);color:var(--ink);text-decoration:none;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;transition:color .15s}
+  .navr{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);display:flex;gap:24px}
+  .navlink{color:var(--ink);text-decoration:none;font-size:12px;line-height:14px;text-transform:uppercase;letter-spacing:.02em;transition:color .15s}
   .navlink:hover,.navlink.on{color:#fff}
-  @media (max-width:1100px){.sig,.navlink{display:none}}
+  @media (max-width:1100px){.sig,.navr{display:none}}
   .ic-btn svg,.sbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
   .homebtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--surf);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none;transition:background .15s,color .15s}
   .homebtn:hover{background:#222;color:#fff}
@@ -61,7 +62,7 @@
 <div class="topbar">
 <header>
   <a class="sig" href="index.html" title="Accueil" aria-label="Lab Experience 360 — accueil">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</a>
-  <a class="navlink" href="about.html">À propos</a>
+  <nav class="navr"><a class="navlink" href="galerie.html">Galerie</a><a class="navlink" href="about.html">À propos</a></nav>
   <a class="homebtn ic-btn" href="index.html" aria-label="Accueil : tous les tutos" title="Lab 360 — Accueil">
     <svg class="cycle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle class="pt" cx="12" cy="4" r="1.9"/><circle class="pt" cx="18.93" cy="8" r="1.9"/><circle class="pt" cx="18.93" cy="16" r="1.9"/><circle class="pt" cx="12" cy="20" r="1.9"/><circle class="pt" cx="5.07" cy="16" r="1.9"/><circle class="pt" cx="5.07" cy="8" r="1.9"/><g class="orb"><circle class="go" cx="12" cy="4" r="2.65"/></g></svg>
   </a>
@@ -88,10 +89,15 @@
   <h2>Objet du site</h2>
   <p>Ce site a un but exclusivement éducatif et non commercial. Bien que son accès soit réservé aux étudiants par un mot de passe, il est soumis aux présentes mentions légales.</p>
   <p>Il s'agit d'un répertoire pédagogique de tutoriels vidéo publiés librement par leurs auteurs sur des plateformes tierces (YouTube, TikTok, Instagram). Il ne fait qu'y renvoyer par des liens : aucune vidéo n'est hébergée ici.</p>
+  <p>Il comprend aussi une galerie de projets réalisés par les étudiants dans le cadre du cours, réservée aux étudiants et accessible avec le même mot de passe.</p>
 
   <h2>Propriété intellectuelle</h2>
   <p>Les vidéos, leurs titres et leurs images de couverture restent la propriété de leurs auteurs respectifs, dont le nom est indiqué sur chaque fiche. Un clic sur un tuto ouvre la vidéo sur la plateforme d'origine.</p>
   <p>Si vous êtes l'auteur d'une vidéo référencée et souhaitez son retrait, écrivez à l'adresse de contact ci-dessus : elle sera retirée dans les meilleurs délais.</p>
+
+  <h2>Galerie des projets étudiants</h2>
+  <p>Les projets présentés dans la galerie restent la propriété de leurs auteurs, les étudiants. Ils sont publiés avec leur accord, uniquement pour être partagés entre les classes du cours, et ne sont pas utilisés à d'autres fins.</p>
+  <p>Chaque projet est présenté avec le prénom et l'initiale du nom de son auteur, sa classe et le sujet. Un étudiant peut à tout moment demander le retrait de son projet ou la modification de son nom en écrivant à l'adresse de contact ci-dessus : la demande sera traitée dans les meilleurs délais.</p>
 
   <h2>Données personnelles et cookies</h2>
   <ul>
@@ -99,6 +105,7 @@
     <li>L'accès aux tutos est réservé aux étudiants par un mot de passe. Pour ne pas avoir à le retaper, il est mémorisé dans votre navigateur (stockage local), uniquement sur votre appareil. Cette mémorisation est strictement nécessaire au service et ne sert à rien d'autre. Le bouton « Se déconnecter », en bas du site, l'efface.</li>
     <li>La police de caractères (Geist) est chargée depuis Google Fonts. Comme pour toute ressource web, votre navigateur transmet à Google votre adresse IP. Aucun cookie n'est déposé.</li>
     <li>La liste des tutos est chargée depuis un service Google (Google Apps Script) qui sert de base de données au site. Comme pour toute page web, votre navigateur transmet à Google les informations techniques de la requête, notamment votre adresse IP. Aucun cookie n'est déposé et aucune donnée n'est enregistrée à votre sujet.</li>
+    <li>Les images de la galerie sont stockées sur le Google Drive de l'éditeur et affichées depuis les serveurs de Google. Pour les afficher, votre navigateur transmet à Google les informations techniques habituelles d'une requête web, notamment votre adresse IP. Ces images ne déposent pas de cookie.</li>
     <li>Les images de couverture des vidéos YouTube sont affichées depuis les serveurs de YouTube (Google). Pour les afficher, votre navigateur transmet à YouTube les informations techniques habituelles d'une requête web, notamment votre adresse IP. Ces images ne déposent pas de cookie.</li>
     <li>Dans la boîte à outils, les petites icônes des sites (favicons) sont affichées via un service de Google, qui reçoit pour cela l'adresse IP de votre navigateur. Elles ne déposent pas de cookie.</li>
     <li>En cliquant sur un tuto, vous quittez ce site pour la plateforme concernée, dont la politique de confidentialité s'applique alors.</li>
@@ -109,7 +116,7 @@
   <p>Novembre 2026.</p>
 </main>
 <footer class="foot">
-  <a href="about.html">À propos</a><a href="mentions-legales.html" class="on">Mentions légales &amp; confidentialité</a>
+  <a href="galerie.html">Galerie</a><a href="about.html">À propos</a><a href="mentions-legales.html" class="on">Mentions légales &amp; confidentialité</a>
 </footer>
 </body>
 </html>

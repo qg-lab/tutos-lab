@@ -111,6 +111,10 @@ const TAGS_AUTO = {
   .sig:hover{color:#fff}
   .sig .inf{display:inline-block;width:1.15em;height:.6em;vertical-align:0;fill:none;stroke:currentColor;stroke-width:1.3}
   .bo{height:52px;display:flex;align-items:center;padding:0 20px;background:#161616;border-radius:3px;color:#BDC9C9}
+  .tabs{display:flex;gap:4px;background:#161616;border-radius:3px;padding:4px;height:52px}
+  .tabs button{background:none;border:0;border-radius:2px;padding:0 20px;color:#8a8a8a;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+  .tabs button:hover{color:#fff}
+  .tabs button.on{background:#2a2a2a;color:#fff}
   .hlinks{position:absolute;right:var(--pad);top:50%;transform:translateY(-50%);display:flex;gap:24px}
   .hlinks a,.hlinks button{background:none;border:0;color:#8a8a8a;text-decoration:none;cursor:pointer;text-transform:inherit;letter-spacing:inherit;font-size:inherit}
   .hlinks a:hover,.hlinks button:hover{color:var(--fg)}
@@ -150,6 +154,35 @@ const TAGS_AUTO = {
   .field input.fetched{animation:flash 1.2s}
   @keyframes flash{0%{border-color:var(--red)}100%{border-color:#333}}
   .preview span{position:absolute;inset:0;display:grid;place-items:center;color:#444;font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:10px}
+
+  /* Galerie */
+  .gform{display:flex;flex-direction:column;gap:22px;border-top:1px solid var(--line);padding-top:24px;max-width:900px}
+  .drop{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;text-align:center;border:1px dashed #444;border-radius:3px;padding:34px 20px;cursor:pointer;transition:border-color .15s,background .15s}
+  .drop:hover,.drop.over{border-color:#fff;background:#0d0d0d}
+  .drop b{font-weight:400;font-size:15px}
+  .drop span{font-size:12px;color:#777;max-width:520px}
+  .queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+  .qi{display:flex;flex-direction:column;gap:8px;position:relative}
+  .qi .th{aspect-ratio:3/4;background:#111;overflow:hidden;position:relative}
+  .qi .th img{width:100%;height:100%;object-fit:cover;display:block}
+  .qi input{background:none;border:0;border-bottom:1px solid #333;padding:6px 0;font-size:14px;outline:none;width:100%}
+  .qi input:focus{border-color:#fff}
+  .qi input.bad{border-color:var(--red)}
+  .qi .rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;cursor:pointer}
+  .qi .st{font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.02em;min-height:14px}
+  .qi .st.ok{color:#7fd17f} .qi .st.err{color:var(--red)} .qi .st.warn{color:#d9b25f}
+  .gwall{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px 14px}
+  .gt{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .gt .th{aspect-ratio:3/4;background:#111;overflow:hidden}
+  .gt .th img{width:100%;height:100%;object-fit:cover;display:block}
+  .gt .nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gt .ra{display:flex;gap:14px}
+  .gt .ra button{background:none;border:0;color:#8a8a8a;cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.02em;padding:0}
+  .gt .ra button:hover{color:#fff}
+  .gt .ra .del:hover,.gt .ra .yes{color:var(--red)}
+  .gt.editing .th{outline:1px solid var(--red);outline-offset:3px}
+  .list h3{font-weight:400;font-size:13px;text-transform:uppercase;letter-spacing:.02em;color:#BDC9C9;margin:26px 0 12px;display:flex;gap:10px}
+  .list h3 small{color:#666}
 
   /* Liste */
   .list{margin-top:72px}
@@ -200,7 +233,11 @@ const TAGS_AUTO = {
 
 <header>
   <a class="sig" href="index.html" title="Accueil" aria-label="Lab Experience 360 — accueil">© 2026 — <svg class="inf" viewBox="0 0 16 8.4" aria-label="∞"><circle cx="4.2" cy="4.2" r="3.6"/><circle cx="11.8" cy="4.2" r="3.6"/></svg><br>Lab Experience 360</a>
-  <p class="bo up">Back office</p>
+  <p class="bo up" id="boLbl">Back office</p>
+  <div class="tabs up" id="tabs" hidden role="tablist">
+    <button type="button" class="on" data-t="tutos" role="tab">Tutos</button>
+    <button type="button" data-t="galerie" role="tab">Galerie</button>
+  </div>
   <div class="hlinks up">
     <a href="index.html" target="_blank" rel="noopener">Voir le site ↗</a>
     <button type="button" id="logout" hidden>Déconnexion</button>
@@ -229,6 +266,7 @@ const TAGS_AUTO = {
     </div>
   </section>
 
+  <div id="vTutos">
   <h1 id="formTitle">Ajouter un tuto</h1>
 
   <form class="form" id="form" autocomplete="off">
@@ -272,6 +310,38 @@ const TAGS_AUTO = {
   </form>
 
   <div class="list" id="list"></div>
+  </div>
+
+  <!-- ===== Galerie des projets ===== -->
+  <div id="vGal" hidden>
+    <h1 id="gTitle">Déposer des projets</h1>
+    <div class="gform">
+      <div class="field">
+        <label class="up">Classe</label>
+        <div class="labels" id="gClasse"></div>
+      </div>
+      <div class="field">
+        <label class="up" for="gSujet">Sujet</label>
+        <input type="text" id="gSujet" placeholder="Ex. Affiche typographique" autocomplete="off">
+        <div class="sugg" id="gSujets"></div>
+      </div>
+      <div class="field" id="gEleveField" hidden>
+        <label class="up" for="gEleve">Élève</label>
+        <input type="text" id="gEleve" placeholder="Ex. Léa Martin → Léa M." autocomplete="off">
+      </div>
+      <label class="drop" id="gDrop">
+        <input type="file" id="gFiles" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+        <b id="gDropT">Glisse les images ici, ou clique pour les choisir</b>
+        <span id="gDropS">Une image par élève. Si le nom du fichier est celui de l'élève (« lea-martin.jpg »), il est repris tout seul.</span>
+      </label>
+      <div class="queue" id="gQueue"></div>
+      <div class="actions">
+        <button class="btn" type="button" id="gSend" disabled>Envoyer</button>
+        <button class="ghost" type="button" id="gCancel" hidden>Annuler</button>
+      </div>
+    </div>
+    <div class="list" id="gList"></div>
+  </div>
 </main>
 
 <div class="toast" id="toast"></div>
@@ -327,6 +397,13 @@ window.ytCover = function (img, failed) {
       if (action === "create") demoData.push({ id: "d" + Date.now(), ...extra.tuto });
       if (action === "update") demoData = demoData.map(t => t.id === extra.id ? { id: t.id, ...extra.tuto } : t);
       if (action === "delete") demoData = demoData.filter(t => t.id !== extra.id);
+      if (action === "galerieAjout") {
+        const ex = demoGal.find(g => norm(g.classe) === norm(extra.projet.classe) && norm(g.sujet) === norm(extra.projet.sujet) && norm(g.eleve) === norm(extra.projet.eleve));
+        if (ex) { ex.image = extra.image.data; ex.ajoute_le = new Date().toISOString(); }
+        else demoGal.push({ id: "g" + Date.now() + Math.random().toString(36).slice(2, 5), ...extra.projet, image: extra.image.data, ajoute_le: new Date().toISOString() });
+      }
+      if (action === "galerieModif") demoGal = demoGal.map(g => g.id === extra.id ? { ...g, ...extra.projet, image: extra.image ? extra.image.data : g.image } : g);
+      if (action === "galerieSuppr") demoGal = demoGal.filter(g => g.id !== extra.id);
       if (action === "infos") return { ok: true, infos: await demoInfos(extra.lien) };
       if ((action === "create" || action === "update") && extra.tuto) extra.tuto.tags.forEach(tg => {
         if (!demoTags.some(x => norm(x) === norm(tg))) demoTags.push(tg);
@@ -335,7 +412,7 @@ window.ytCover = function (img, failed) {
         if (String(extra.cle || "").length < 4) return Promise.reject(new Error("Mot de passe étudiant : 4 caractères minimum"));
         demoCle = extra.cle;
       }
-      return { ok: true, tutos: JSON.parse(JSON.stringify(demoData)), tags: demoTags.slice(), accesEtudiants: !!demoCle };
+      return { ok: true, tutos: JSON.parse(JSON.stringify(demoData)), tags: demoTags.slice(), galerie: JSON.parse(JSON.stringify(demoGal)), accesEtudiants: !!demoCle };
     }
     const res = await fetch(API_URL, {
       method: "POST",
@@ -361,11 +438,14 @@ window.ytCover = function (img, failed) {
   }
 
   let tutos = [];
+  let galerie = [];
+  let demoGal = [];
   let dbTags = [];                 // liste des tags enregistrée dans la base (onglet « Tags »)
   let demoTags = ["3D", "web", "print", "bitmap", "chrome"];
   let accesEtudiants = false;
   function setData(d) {
     tutos = d.tutos || []; if (d.tags) dbTags = d.tags;
+    if (d.galerie) galerie = d.galerie;
     if (typeof d.accesEtudiants === "boolean") { accesEtudiants = d.accesEtudiants; renderAcces(); }
   }
   function renderAcces() {
@@ -442,6 +522,195 @@ window.ytCover = function (img, failed) {
     return APPROCHES.filter(c => found.includes(c));   // dans l'ordre du cycle
   }
 
+
+  /* =====================================================================
+     GALERIE DES PROJETS — 1 image par élève et par sujet
+     ===================================================================== */
+  const CLASSES = ["Prépas", "G2", "G3"];
+  const gsrc = (id, w) => /^(data:|blob:|https?:)/.test(id) ? id : `https://lh3.googleusercontent.com/d/${id}=w${w}`;
+  window.gImgErr = img => { if (!img.dataset.r && img.dataset.id) { img.dataset.r = 1; img.src = `https://drive.google.com/thumbnail?id=${img.dataset.id}&sz=w400`; } };
+  let gClasse = "", gQueue = [], gEdit = null, gBusy = false;
+
+  // « léa martin », « lea-martin.jpg » ou « Léa M. » → « Léa M. »
+  const cap = w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  function formatNom(v) {
+    let s = String(v || "").replace(/\.[a-z0-9]{2,4}$/i, "").replace(/[_\-.]+/g, " ").replace(/\d+/g, " ").replace(/\s+/g, " ").trim();
+    if (!s || /^(img|dsc|dscn|pxl|photo|image|scan|screenshot|capture|sans titre|untitled|fichier)\b/i.test(s)) return "";
+    const w = s.split(" ").filter(Boolean);
+    if (w.length === 1) return cap(w[0]);
+    return w[0].split("-").map(cap).join("-") + " " + w[w.length - 1].charAt(0).toUpperCase() + ".";
+  }
+  const sujetsDe = c => [...new Map(galerie.filter(g => !c || norm(g.classe) === norm(c)).map(g => [norm(g.sujet), g.sujet])).values()];
+  const existe = (c, s, e) => galerie.find(g => norm(g.classe) === norm(c) && norm(g.sujet) === norm(s) && norm(g.eleve) === norm(e) && (!gEdit || g.id !== gEdit));
+
+  // Réduit l'image avant l'envoi (2400 px max) : plus rapide, et le Drive reste léger
+  function prepare(file) {
+    return new Promise((ok, ko) => {
+      if (file.type === "image/gif") { const r = new FileReader(); r.onload = () => ok({ data: r.result, mime: file.type }); r.onerror = ko; r.readAsDataURL(file); return; }
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        const g = c.getContext("2d");
+        const png = file.type === "image/png";
+        if (!png) { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        const mime = png ? "image/png" : "image/jpeg";
+        ok({ data: c.toDataURL(mime, .86), mime });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ko(new Error("Image illisible")); };
+      img.src = url;
+    });
+  }
+
+  function renderGal() {
+    $("gClasse").innerHTML = CLASSES.map(c => `<button type="button" class="lab${c === gClasse ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+    const cur = norm($("gSujet").value);
+    $("gSujets").innerHTML = sujetsDe(gClasse).filter(x => norm(x) !== cur).map(x => `<button type="button" data-s="${esc(x)}">+ ${esc(x)}</button>`).join("");
+    renderQueue(); renderGList();
+  }
+  function renderQueue() {
+    const c = gClasse, s = $("gSujet").value.trim();
+    $("gQueue").innerHTML = gQueue.map((q, i) => {
+      const dup = c && s && q.nom && existe(c, s, q.nom);
+      const st = q.st || (dup ? "Remplacera l'image en ligne" : "");
+      const cls = q.cls || (dup ? "warn" : "");
+      return `<div class="qi" data-i="${i}">
+        <div class="th"><img src="${q.url}" alt=""></div>
+        ${q.done ? "" : `<button type="button" class="rm" title="Retirer" aria-label="Retirer">✕</button>`}
+        <input type="text" value="${esc(q.nom)}" placeholder="Prénom Nom" aria-label="Nom de l'élève" ${q.done || gBusy ? "disabled" : ""}>
+        <span class="st ${cls}">${esc(st)}</span></div>`;
+    }).join("");
+    $("gEleveField").hidden = !gEdit;
+    $("gDrop").hidden = false;
+    $("gDropT").textContent = gEdit ? "Remplacer l'image (facultatif) : glisse-la ici ou clique" : "Glisse les images ici, ou clique pour les choisir";
+    $("gDropS").hidden = !!gEdit;
+    updSend();
+  }
+  function updSend() {
+    const todo = gQueue.filter(q => !q.done);
+    const okBase = gClasse && $("gSujet").value.trim();
+    if (gEdit) {
+      $("gSend").disabled = gBusy || !okBase || !$("gEleve").value.trim();
+      $("gSend").textContent = gBusy ? "Enregistrement…" : "Enregistrer";
+      return;
+    }
+    $("gSend").disabled = gBusy || !okBase || !todo.length;
+    $("gSend").textContent = gBusy ? $("gSend").textContent
+      : !gClasse ? "Choisis une classe" : !okBase ? "Indique le sujet" : !todo.length ? "Ajoute des images"
+      : `Envoyer ${todo.length} projet${todo.length > 1 ? "s" : ""}`;
+  }
+  function addFiles(files) {
+    const imgs = [...files].filter(f => /^image\/(jpeg|png|webp|gif)$/.test(f.type));
+    if (!imgs.length) return toast("Formats acceptés : JPG, PNG, WebP ou GIF", true);
+    if (gEdit) { gQueue = [{ file: imgs[0], url: URL.createObjectURL(imgs[0]), nom: $("gEleve").value }]; renderQueue(); return; }
+    gQueue = gQueue.filter(q => !q.done);
+    imgs.forEach(f => gQueue.push({ file: f, url: URL.createObjectURL(f), nom: formatNom(f.name) }));
+    renderQueue();
+  }
+  $("gClasse").addEventListener("click", e => { const b = e.target.closest(".lab"); if (!b || gBusy) return; gClasse = gClasse === b.dataset.c ? "" : b.dataset.c; renderGal(); });
+  $("gSujet").addEventListener("input", () => { renderQueue(); const cur = norm($("gSujet").value); $("gSujets").querySelectorAll("button").forEach(b => b.hidden = norm(b.dataset.s) === cur); });
+  $("gSujets").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; $("gSujet").value = b.dataset.s; renderGal(); });
+  $("gEleve").addEventListener("input", updSend);
+  $("gEleve").addEventListener("blur", () => { const f = formatNom($("gEleve").value); if (f) $("gEleve").value = f; updSend(); });
+  $("gFiles").addEventListener("change", e => { addFiles(e.target.files); e.target.value = ""; });
+  ["dragenter", "dragover"].forEach(t => $("gDrop").addEventListener(t, e => { e.preventDefault(); $("gDrop").classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => $("gDrop").addEventListener(t, e => { e.preventDefault(); $("gDrop").classList.remove("over"); }));
+  $("gDrop").addEventListener("drop", e => addFiles(e.dataTransfer.files));
+  $("gQueue").addEventListener("click", e => {
+    const rm = e.target.closest(".rm"); if (!rm || gBusy) return;
+    const i = +rm.closest(".qi").dataset.i; URL.revokeObjectURL(gQueue[i].url); gQueue.splice(i, 1); renderQueue();
+  });
+  $("gQueue").addEventListener("input", e => { const it = e.target.closest(".qi"); if (it) { gQueue[+it.dataset.i].nom = e.target.value; e.target.classList.remove("bad"); updSend(); } });
+  $("gQueue").addEventListener("focusout", e => {
+    const it = e.target.closest(".qi"); if (!it || e.target.tagName !== "INPUT") return;
+    const q = gQueue[+it.dataset.i], f = formatNom(e.target.value);
+    if (f && f !== q.nom) { q.nom = f; renderQueue(); }
+  });
+
+  $("gSend").addEventListener("click", async () => {
+    const classe = gClasse, sujet = $("gSujet").value.trim();
+    if (!classe || !sujet || gBusy) return;
+    if (gEdit) {
+      const eleve = formatNom($("gEleve").value) || $("gEleve").value.trim();
+      gBusy = true; updSend();
+      try {
+        const extra = { id: gEdit, projet: { classe, sujet, eleve } };
+        if (gQueue[0] && !gQueue[0].done) extra.image = await prepare(gQueue[0].file);
+        setData(await api("galerieModif", extra));
+        toast("Projet modifié");
+        gBusy = false; gResetForm();
+      } catch (err) { gBusy = false; toast(err.message, true); updSend(); }
+      return;
+    }
+    const todo = gQueue.filter(q => !q.done);
+    let manque = false;
+    todo.forEach(q => { q.nom = formatNom(q.nom) || q.nom.trim(); if (!q.nom) manque = true; });
+    if (manque) { renderQueue(); $("gQueue").querySelectorAll(".qi input").forEach((inp, i) => { if (!gQueue[i].nom) inp.classList.add("bad"); }); return toast("Indique le nom de chaque élève", true); }
+    gBusy = true; let n = 0;
+    for (const q of todo) {
+      $("gSend").textContent = `Envoi… ${n + 1} / ${todo.length}`;
+      q.st = "Envoi…"; q.cls = ""; renderQueue();
+      try {
+        const image = await prepare(q.file);
+        setData(await api("galerieAjout", { projet: { classe, sujet, eleve: q.nom }, image }));
+        q.done = true; q.st = "En ligne ✓"; q.cls = "ok"; n++;
+      } catch (err) { q.st = err.message; q.cls = "err"; }
+      renderQueue(); renderGList();
+    }
+    gBusy = false;
+    toast(n === todo.length ? `${n} projet${n > 1 ? "s" : ""} en ligne` : `${n} / ${todo.length} envoyés — voir les erreurs`, n !== todo.length);
+    renderGal();
+  });
+
+  function gResetForm() {
+    gEdit = null; gQueue.forEach(q => URL.revokeObjectURL(q.url)); gQueue = [];
+    $("gEleve").value = ""; $("gTitle").textContent = "Déposer des projets"; $("gCancel").hidden = true;
+    renderGal();
+  }
+  $("gCancel").addEventListener("click", gResetForm);
+
+  function renderGList() {
+    const parClasse = CLASSES.map(c => [c, galerie.filter(g => norm(g.classe) === norm(c))]).filter(x => x[1].length);
+    $("gList").innerHTML = `<h1>Galerie en ligne <small class="up" style="color:#8a8a8a;font-size:12px">${galerie.length}</small></h1>` +
+      (galerie.length ? "" : `<p class="empty">Aucun projet pour l'instant.</p>`) +
+      parClasse.map(([c, l]) => `<h2>${esc(c)}<small>${l.length}</small></h2>` +
+        [...new Map(l.map(g => [norm(g.sujet), g.sujet])).entries()].map(([k, s]) => {
+          const items = l.filter(g => norm(g.sujet) === k).sort((a, b) => a.eleve.localeCompare(b.eleve, "fr"));
+          return `<h3>${esc(s)} <small>${items.length}</small></h3><div class="gwall">${items.map(g => {
+            const ext = /^(data:|blob:|https?:)/.test(g.image);
+            return `<div class="gt${gEdit === g.id ? " editing" : ""}" data-id="${esc(g.id)}">
+              <div class="th"><img loading="lazy" src="${esc(gsrc(g.image, 400))}" ${ext ? "" : `data-id="${esc(g.image)}"`} onerror="gImgErr(this)" referrerpolicy="no-referrer" alt=""></div>
+              <span class="nm">${esc(g.eleve)}</span>
+              <div class="ra"><button type="button" class="edit">Modifier</button><button type="button" class="del">Supprimer</button></div></div>`;
+          }).join("")}</div>`;
+        }).join("")).join("");
+  }
+  $("gList").addEventListener("click", async e => {
+    const t = e.target.closest(".gt"); if (!t || gBusy) return;
+    const g = galerie.find(x => x.id === t.dataset.id); if (!g) return;
+    if (e.target.closest(".edit")) {
+      gResetForm(); gEdit = g.id; gClasse = CLASSES.find(c => norm(c) === norm(g.classe)) || "";
+      $("gSujet").value = g.sujet; $("gEleve").value = g.eleve;
+      $("gTitle").textContent = "Modifier un projet"; $("gCancel").hidden = false;
+      renderGal(); window.scrollTo({ top: 0, behavior: "smooth" }); return;
+    }
+    const del = e.target.closest(".del"); if (!del) return;
+    if (!del.classList.contains("yes")) { del.classList.add("yes"); del.textContent = "Confirmer ?"; setTimeout(() => { if (del.isConnected) { del.classList.remove("yes"); del.textContent = "Supprimer"; } }, 3000); return; }
+    try { setData(await api("galerieSuppr", { id: g.id })); toast("Projet supprimé (image mise à la corbeille du Drive)"); if (gEdit === g.id) gResetForm(); else renderGList(); }
+    catch (err) { toast(err.message, true); }
+  });
+
+  // Onglets Tutos / Galerie
+  $("tabs").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
+    $("vTutos").hidden = b.dataset.t !== "tutos"; $("vGal").hidden = b.dataset.t !== "galerie";
+    try { sessionStorage.setItem("bo-tab", b.dataset.t); } catch (er) {}
+  });
+
   /* ---------- Connexion ---------- */
   async function login(pwd) {
     password = pwd;
@@ -450,6 +719,8 @@ window.ytCover = function (img, failed) {
       try { sessionStorage.setItem("bo-pwd", pwd); } catch (e) {}
       setData(d);
       $("loginView").hidden = true; $("app").hidden = false; $("logout").hidden = false;
+      $("boLbl").hidden = true; $("tabs").hidden = false;
+      try { if (sessionStorage.getItem("bo-tab") === "galerie") document.querySelector('#tabs [data-t="galerie"]').click(); } catch (er) {}
       $("demo").hidden = !DEMO;
       render(); $("fLien").focus();
     } catch (e) {
@@ -670,7 +941,7 @@ window.ytCover = function (img, failed) {
     }
   });
 
-  function render() { renderLabels(); renderCats(); renderApps(); renderSugg(); renderList(); renderAcces(); }
+  function render() { renderGal(); renderLabels(); renderCats(); renderApps(); renderSugg(); renderList(); renderAcces(); }
 
   async function saveCle() {
     const cle = $("cleEtu").value.trim();
