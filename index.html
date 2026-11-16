@@ -788,13 +788,13 @@ window.ytCover = function (img, failed) {
       ? `<div class="fb">${esc(titre)}</div>
          <img class="cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="${esc(coverSrc(t.cover, 600))}"
            ${/^(data:|https?:)/.test(t.cover) ? "" : `data-gid="${esc(t.cover)}"`} onerror="coverErr(this)">
-         <div class="shade"></div>${t.type === "youtube" ? "" : `<span class="plat">${NOM[t.type]}</span>`}`
+         <div class="shade"></div>`
       : t.type === "youtube"
       ? `<div class="fb">${esc(titre)}</div>
          <img class="cover" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-id="${t.id}" data-s="0" src="https://i.ytimg.com/vi/${t.id}/maxresdefault.jpg"
            onload="ytCover(this,false)" onerror="ytCover(this,true)">
          <div class="shade"></div>`
-      : `<div class="fb">${esc(titre)}</div><span class="plat">${NOM[t.type]}</span>`;
+      : `<div class="fb">${esc(titre)}</div>`;
     wrap.innerHTML = `
       <div class="card ${t.type === "youtube" || t.cover ? "yt" : "txt"}">
         ${visual}
